@@ -1,0 +1,107 @@
+# Key Concepts
+
+## Statistical Power
+
+Statistical power is the probability of correctly rejecting the null hypothesis when the alternative is true — in other words, the chance your study will detect a real effect. Convention targets 80% power, meaning a 20% chance of a false negative (Type II error).
+
+Power depends on four factors:
+- **Effect size** — Larger effects are easier to detect.
+- **Sample size** — More data gives more power.
+- **Alpha level** — A more lenient threshold (e.g., 0.10 vs 0.05) increases power but also increases false positives.
+- **Variability** — More noise in the data reduces power.
+
+## Monte Carlo Simulation
+
+Instead of using closed-form formulas (which only exist for simple designs), MCPower estimates power by simulation:
+
+1. Generate a synthetic dataset under your specified model (effects, variable types, correlations, sample size).
+2. Fit the statistical model (OLS regression) to the synthetic data.
+3. Check whether each effect is statistically significant (p < alpha).
+4. Repeat steps 1-3 many times (e.g., 1,600 simulations).
+5. Power = the proportion of simulations where the effect was significant.
+
+This approach handles any model complexity: interactions, correlated predictors, categorical variables, non-normal distributions, and clustered data.
+
+## Effect Sizes
+
+Effect sizes in MCPower are **standardized regression coefficients (betas)**. They represent the expected change in the outcome (in standard deviations) per one standard deviation change in the predictor.
+
+Conventional benchmarks (Cohen's guidelines):
+
+| Type | Small | Medium | Large |
+|---|---|---|---|
+| Continuous | 0.10 | 0.25 | 0.40 |
+| Binary/Factor | 0.20 | 0.50 | 0.80 |
+
+Negative effect sizes indicate inverse relationships. The sign affects the direction but not the power (power depends on the magnitude).
+
+## Variable Types and Distributions
+
+### Continuous
+Standard normal distribution (mean=0, SD=1). When empirical data is uploaded, the actual distribution is preserved.
+
+### Binary
+Two-level variable (0/1). The **proportion** parameter sets the probability of the higher level. Default is 0.50 (balanced groups).
+
+### Factor
+Categorical variable with 2-20 levels. Internally represented as dummy variables with level 1 as the reference category. A 3-level factor produces two dummy predictors. Each level has a proportion parameter controlling how observations are distributed across categories.
+
+## Interactions
+
+Interaction terms (e.g., `x1:x2`) test whether the effect of one predictor depends on the level of another. In the formula, use `:` for a specific interaction or `*` as shorthand for all main effects plus their interaction.
+
+When a factor variable is involved in an interaction, it is expanded into all combinations of the factor's dummy levels. For example, `x1:group` with a 3-level factor `group` becomes `x1:group[2]` and `x1:group[3]`.
+
+## Multiple Testing Corrections
+
+When testing multiple predictors, the chance of at least one false positive increases. Corrections adjust p-values to control for this:
+
+- **Bonferroni** — Multiplies each p-value by the number of tests. Most conservative.
+- **Holm** — A step-down version of Bonferroni. Less conservative, still controls the family-wise error rate.
+- **Benjamini-Hochberg** — Controls the false discovery rate (FDR). Least conservative, more power.
+
+Corrections reduce power for individual tests. If you only care about the overall model test, you may not need a correction.
+
+## Scenario Analysis
+
+Scenarios test how robust your power estimates are to violations of statistical assumptions. Three progressively pessimistic scenarios are available:
+
+- **Optimistic** — Your exact specifications (no violations). This is the baseline.
+- **Realistic** — Moderate violations: some heterogeneity in effects, mild heteroskedasticity, correlation noise, and occasional non-normal distributions.
+- **Doomer** — Severe violations: substantial effect heterogeneity, notable heteroskedasticity, large correlation noise, and frequent non-normality.
+
+Scenario parameters are configured in Settings. Running with scenarios enabled gives you a range of power estimates rather than a single point estimate.
+
+## Mixed-Effects Models
+
+**Note:** Mixed-effects models are supported by the MCPower library but are not yet available in the GUI. The information below is included for reference; mixed model support in the app is planned for a future release.
+
+Mixed-effects models handle **clustered data** — observations grouped within higher-level units (e.g., students within schools, patients within hospitals). MCPower supports random intercept models using the formula syntax `y ~ x1 + x2 + (1|cluster_variable)`.
+
+### Key parameters
+
+- **ICC (Intraclass Correlation Coefficient)** — The proportion of total variance due to differences between clusters. Higher ICC means more clustering, which reduces effective sample size.
+- **Number of clusters** — How many groups. More clusters generally improve power more than larger clusters.
+
+### Design effect
+
+Clustering reduces the effective sample size:
+
+```
+Design Effect = 1 + (cluster_size - 1) * ICC
+Effective N = Total N / Design Effect
+```
+
+For example, with 600 observations in 30 clusters (20 per cluster) and ICC = 0.2:
+- Design Effect = 1 + 19 * 0.2 = 4.8
+- Effective N = 600 / 4.8 = 125
+
+You need roughly 4.8 times more observations than a non-clustered design for the same power.
+
+### Design recommendations
+
+- Aim for 20-30 clusters minimum (50+ is ideal).
+- Ensure at least 25 observations per cluster.
+- Ensure at least 10 observations per model parameter per cluster.
+- Lower ICC is better for power (ICC < 0.2 is manageable, ICC > 0.4 is challenging).
+- Increasing the number of clusters is generally more effective than increasing cluster size.

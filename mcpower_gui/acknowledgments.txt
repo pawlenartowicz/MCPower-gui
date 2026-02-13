@@ -1,0 +1,23 @@
+Acknowledgments
+
+To Maja Willard (Wójcik) — for her extraordinary patience
+and unwavering support through the hundreds of hours
+I poured into this "weekend project."
+
+The quotes around "weekend project" exist because we both know 
+it turned into something far beyond a single weekend (or ten).
+
+She endured late nights, vacant stares when she asked me
+perfectly normal questions, absent-minded dinner conversations
+about bugs and features, and my endless "just three more minutes"
+— which, as we both know, never once meant three minutes.
+
+She watched me celebrate fixing a bug at 3 AM like Man Utd just 
+won Champions Legue, only to discover a new one by 3:05.
+
+Through all of it, she stayed patient, encouraging, and kind
+— and only occasionally gave me that look when I opened
+my laptop again.
+
+She is the real hero behind this app, and no amount of
+commit messages could express how much that means to me.

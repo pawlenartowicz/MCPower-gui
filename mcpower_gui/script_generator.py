@@ -1,0 +1,144 @@
+"""Generate a standalone Python replication script from analysis state."""
+
+from __future__ import annotations
+
+from mcpower_gui.state import build_correlations_string, build_variable_type_string
+
+
+def generate_script(
+    state_snapshot: dict,
+    analysis_params: dict,
+    mode: str,
+    data_file_path: str | None = None,
+) -> str:
+    """Build a complete Python script mirroring the worker logic.
+
+    Parameters
+    ----------
+    state_snapshot : dict
+        JSON-serializable model state (from ModelState.snapshot() or worker).
+    analysis_params : dict
+        Per-run parameters from the Analysis tab.
+    mode : str
+        "power" or "sample_size".
+    data_file_path : str | None
+        Path to uploaded CSV file, if any.
+
+    Returns
+    -------
+    str
+        Complete Python script that reproduces the analysis.
+    """
+    lines: list[str] = []
+    lines.append("from mcpower import MCPower")
+
+    if data_file_path:
+        lines.append("import pandas as pd")
+    lines.append("")
+
+    # Data loading
+    if data_file_path:
+        lines.append(f'data = pd.read_csv("{data_file_path}")')
+        lines.append("")
+
+    # Model creation
+    formula = state_snapshot.get("formula", "")
+    lines.append(f'model = MCPower("{formula}")')
+
+    # Upload data
+    if data_file_path:
+        preserve = state_snapshot.get("preserve_correlation", "partial")
+        lines.append(f'model.upload_data(data, preserve_correlation="{preserve}")')
+
+    # Variable types
+    vtypes = state_snapshot.get("variable_types", {})
+    vtype_str = build_variable_type_string(vtypes)
+    if vtype_str:
+        lines.append(f'model.set_variable_type("{vtype_str}")')
+
+    # Effects
+    effects = state_snapshot.get("effects", {})
+    if effects:
+        effects_str = ", ".join(f"{k}={v}" for k, v in effects.items())
+        lines.append(f'model.set_effects("{effects_str}")')
+
+    # Simulation settings
+    n_sims = state_snapshot.get("n_simulations", 1600)
+    n_sims_mm = state_snapshot.get("n_simulations_mixed_model", 400)
+    lines.append(f'model.set_simulations({n_sims}, model_type="linear")')
+    lines.append(f'model.set_simulations({n_sims_mm}, model_type="mixed")')
+
+    alpha = state_snapshot.get("alpha", 0.05)
+    lines.append(f"model.set_alpha({alpha})")
+
+    target_power = state_snapshot.get("target_power", 80.0)
+    lines.append(f"model.set_power({target_power})")
+
+    seed = state_snapshot.get("seed", 2137)
+    lines.append(f"model.set_seed({seed})")
+
+    max_failed = state_snapshot.get("max_failed_simulations", 0.03)
+    lines.append(f"model.set_max_failed_simulations({max_failed})")
+
+    # Parallel ("mixedmodels" is the default, only emit when different)
+    parallel_val = state_snapshot.get("parallel", "mixedmodels")
+    if parallel_val is False:
+        lines.append("model.set_parallel(False)")
+    elif parallel_val is True:
+        n_cores = state_snapshot.get("n_cores", 1)
+        lines.append(f"model.set_parallel(enable=True, n_cores={n_cores})")
+
+    # Scenario configs
+    scenario_configs = state_snapshot.get("scenario_configs", {})
+    if scenario_configs:
+        lines.append(f"model.set_scenario_configs({scenario_configs!r})")
+
+    # Correlations
+    correlations = state_snapshot.get("correlations", {})
+    if correlations:
+        corr_str = build_correlations_string(correlations)
+        lines.append(f'model.set_correlations("{corr_str}")')
+
+    lines.append("model.apply()")
+    lines.append("")
+
+    # Analysis call
+    correction = analysis_params.get("correction") or None
+    scenarios = analysis_params.get("scenarios", False)
+    summary = "short"
+    target_test = analysis_params.get("target_test", "all")
+    test_formula = analysis_params.get("test_formula", "")
+
+    corr_arg = f'"{correction}"' if correction else "None"
+    tf_arg = f'"{test_formula}"' if test_formula else "None"
+
+    if mode == "power":
+        sample_size = analysis_params.get("sample_size", 100)
+        lines.append("result = model.find_power(")
+        lines.append(f"    sample_size={sample_size},")
+        lines.append(f'    target_test="{target_test}",')
+        lines.append(f"    correction={corr_arg},")
+        lines.append(f"    scenarios={scenarios},")
+        lines.append(f'    summary="{summary}",')
+        lines.append(f"    test_formula={tf_arg},")
+        lines.append("    print_results=True,")
+        lines.append("    return_results=True,")
+        lines.append(")")
+    else:
+        ss_from = analysis_params.get("ss_from", 30)
+        ss_to = analysis_params.get("ss_to", 200)
+        ss_by = analysis_params.get("ss_by", 10)
+        lines.append("result = model.find_sample_size(")
+        lines.append(f"    from_size={ss_from},")
+        lines.append(f"    to_size={ss_to},")
+        lines.append(f"    by={ss_by},")
+        lines.append(f'    target_test="{target_test}",')
+        lines.append(f"    correction={corr_arg},")
+        lines.append(f"    scenarios={scenarios},")
+        lines.append(f'    summary="{summary}",')
+        lines.append(f"    test_formula={tf_arg},")
+        lines.append("    print_results=True,")
+        lines.append("    return_results=True,")
+        lines.append(")")
+
+    return "\n".join(lines) + "\n"
