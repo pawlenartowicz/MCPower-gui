@@ -1,5 +1,6 @@
 """Entry point for `python -m mcpower_gui`."""
 
+import os
 import sys
 from pathlib import Path
 
@@ -11,6 +12,9 @@ from mcpower_gui import __version__
 
 def _smoke_test() -> None:
     """Run a comprehensive self-check without opening a window, then exit."""
+    # Use offscreen platform — smoke test needs no real display
+    os.environ["QT_QPA_PLATFORM"] = "offscreen"
+
     errors: list[str] = []
 
     # 1. Critical imports

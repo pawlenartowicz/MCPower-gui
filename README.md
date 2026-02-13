@@ -1,6 +1,51 @@
 # MCPower GUI
 
-MCPower GUI is a desktop application for **Monte Carlo power analysis**. It provides a graphical interface to the [MCPower](https://github.com/freestylerscientist/MCPower) library, letting you plan sample sizes and estimate statistical power for complex study designs — without writing any code.
+MCPower GUI is a desktop application for **Monte Carlo power analysis**. It provides a graphical interface to the [MCPower](https://github.com/pawlenartowicz/MCPower) library, letting you plan sample sizes and estimate statistical power for complex study designs — without writing any code.
+
+## Download
+
+| Platform | Link |
+|---|---|
+| **Windows** | [MCPower.exe](https://github.com/pawlenartowicz/mcpower-gui/releases/latest/download/MCPower.exe) |
+| **Linux** | [MCPower-linux](https://github.com/pawlenartowicz/mcpower-gui/releases/latest/download/MCPower-linux) |
+| **macOS** | [MCPower-macos](https://github.com/pawlenartowicz/mcpower-gui/releases/latest/download/MCPower-macos) |
+
+No Python installation required — these are standalone executables.
+
+### Windows
+
+1. Download `MCPower.exe`.
+2. Double-click to run.
+
+**Note:** Windows SmartScreen may show a warning ("Windows protected your PC") because the application is not code-signed. Code signing certificates cost ~$100/year, which is not feasible for a free open-source project. The app is safe — you can verify the source code in this repository. To proceed: click **More info** → **Run anyway**.
+
+Your antivirus software may also flag the file. This is a known false positive caused by the packaging tool (PyInstaller) used to create standalone Python executables. Many legitimate open-source applications trigger the same warning.
+
+### Linux
+
+1. Download `MCPower-linux`.
+2. Open a terminal in the download folder:
+   - **File manager:** Right-click in the folder → **Open Terminal Here**
+   - **Or manually:** open a terminal and run `cd ~/Downloads`
+3. Make the file executable and run it:
+   ```bash
+   chmod +x MCPower-linux
+   ./MCPower-linux
+   ```
+
+### macOS
+
+1. Download `MCPower-macos`.
+2. Open Terminal in the download folder:
+   - Open **Finder** → navigate to the Downloads folder → right-click the folder in the sidebar → **Services** → **New Terminal at Folder**
+   - **Or manually:** open Terminal and run `cd ~/Downloads`
+3. Make the file executable:
+   ```bash
+   chmod +x MCPower-macos
+   ```
+4. Run the app: right-click `MCPower-macos` in Finder → **Open** (required on first launch to bypass Gatekeeper, since the app is not signed with an Apple Developer certificate).
+
+Full documentation is available in-app via the **Documentation** menu item.
 
 ## What is power analysis?
 
@@ -32,15 +77,29 @@ Both `=` and `~` are accepted as separators between the dependent variable and p
 
 **Note:** Mixed-effects models (e.g., `y ~ x + (1|school)`) are supported by the MCPower library but are not yet available in the GUI. Mixed model support in the app is planned for a future release.
 
-## Installation
-
-MCPower GUI is distributed as a standalone desktop application — no Python installation required.
-
-- **Linux:** Download the `.bin` file, make it executable (`chmod +x mcpower-gui.bin`), and run it.
-- **Windows:** Download the `.exe` file and run it.
-
-Full documentation is available in-app via the **Documentation** menu item.
-
 ## Built on
 
-MCPower GUI is built on [MCPower 0.4.0](https://github.com/freestylerscientist/MCPower).
+MCPower GUI is built on [MCPower](https://github.com/pawlenartowicz/MCPower).
+
+## License & Citation
+
+GPL v3. If you use MCPower in research, please cite:
+
+Lenartowicz, P. (2025). MCPower: Monte Carlo Power Analysis for Statistical Models. Zenodo. DOI: 10.5281/zenodo.16502734
+
+```bibtex
+@software{mcpower2025,
+  author = {Pawel Lenartowicz},
+  title = {MCPower: Monte Carlo Power Analysis for Statistical Models},
+  year = {2025},
+  publisher = {Zenodo},
+  doi = {10.5281/zenodo.16502734},
+  url = {https://doi.org/10.5281/zenodo.16502734}
+}
+```
+
+## Support
+
+This project is free and open-source. If you'd like to support its development, donations are appreciated!
+
+[Support this project](https://freestylerscientist.pl/support_me)
