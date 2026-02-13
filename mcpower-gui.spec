@@ -10,18 +10,22 @@ Build on each target OS:
 import sys
 from pathlib import Path
 
+from PyInstaller.utils.hooks import copy_metadata
+
 block_cipher = None
 
 # ── Paths ────────────────────────────────────────────────────────
 pkg_dir = Path("mcpower_gui")
 
 # ── Data files bundled into the frozen app ───────────────────────
+# copy_metadata bundles the .dist-info directory so that
+# importlib.metadata.version("MCPower") works in the frozen app.
 datas = [
     (str(pkg_dir / "cat.gif"), "mcpower_gui"),
     (str(pkg_dir / "icon.png"), "mcpower_gui"),
     (str(pkg_dir / "acknowledgments.txt"), "mcpower_gui"),
     (str(pkg_dir / "docs"), "mcpower_gui/docs"),
-]
+] + copy_metadata("MCPower")
 
 # ── Icon (per-OS format) ─────────────────────────────────────────
 if sys.platform == "win32":
@@ -71,7 +75,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=["tkinter", "test", "unittest"],
+    excludes=["tkinter"],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,

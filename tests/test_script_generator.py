@@ -1,0 +1,74 @@
+"""Tests for mcpower_gui.script_generator — generate_script output."""
+
+from mcpower_gui.script_generator import generate_script
+from mcpower_gui.state import ModelState
+
+
+def _minimal_state(**overrides) -> dict:
+    """Return a minimal ModelState snapshot with optional overrides."""
+    state = ModelState(formula="y = x1 + x2", effects={"x1": 0.5, "x2": 0.3})
+    snap = state.snapshot()
+    snap.update(overrides)
+    return snap
+
+
+def _minimal_params(**overrides) -> dict:
+    params = {"sample_size": 100, "target_test": "all"}
+    params.update(overrides)
+    return params
+
+
+class TestGenerateScriptPowerMode:
+    def test_minimal_power(self):
+        script = generate_script(_minimal_state(), _minimal_params(), mode="power")
+        assert "from mcpower import MCPower" in script
+        assert 'MCPower("y = x1 + x2")' in script
+        assert "find_power(" in script
+        assert "sample_size=100" in script
+        assert 'set_effects("x1=0.5, x2=0.3")' in script
+
+    def test_no_pandas_without_data(self):
+        script = generate_script(_minimal_state(), _minimal_params(), mode="power")
+        assert "import pandas" not in script
+        assert "upload_data" not in script
+
+
+class TestGenerateScriptSampleSizeMode:
+    def test_sample_size_mode(self):
+        params = _minimal_params(ss_from=30, ss_to=200, ss_by=10)
+        script = generate_script(_minimal_state(), params, mode="sample_size")
+        assert "find_sample_size(" in script
+        assert "from_size=30" in script
+        assert "to_size=200" in script
+        assert "by=10" in script
+
+
+class TestGenerateScriptWithData:
+    def test_data_file_path(self):
+        script = generate_script(
+            _minimal_state(),
+            _minimal_params(),
+            mode="power",
+            data_file_path="/tmp/data.csv",
+        )
+        assert "import pandas as pd" in script
+        assert 'pd.read_csv("/tmp/data.csv")' in script
+        assert "upload_data(data" in script
+
+
+class TestGenerateScriptVariableTypes:
+    def test_variable_types_included(self):
+        state = _minimal_state(
+            variable_types={"x1": {"type": "binary", "proportion": 0.5}}
+        )
+        script = generate_script(state, _minimal_params(), mode="power")
+        assert "set_variable_type(" in script
+        assert "binary" in script
+
+
+class TestGenerateScriptCorrelations:
+    def test_correlations_included(self):
+        state = _minimal_state(correlations={"x1,x2": 0.4})
+        script = generate_script(state, _minimal_params(), mode="power")
+        assert "set_correlations(" in script
+        assert "corr(x1, x2)=0.4" in script

@@ -1,0 +1,92 @@
+name: Test MCPower GUI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  unit-tests:
+    name: Tests – Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install system dependencies
+      run: sudo apt-get update && sudo apt-get install -y xvfb libegl1
+
+    - name: Install package with dev dependencies
+      run: pip install -e ".[dev]"
+
+    - name: Run tests
+      run: xvfb-run python -m pytest tests/ -v
+
+  binary-test:
+    name: Binary – ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install system dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: sudo apt-get update && sudo apt-get install -y xvfb libegl1
+
+    - name: Install dependencies
+      run: |
+        pip install "MCPower>=0.4.0"
+        pip install "PySide6>=6.5.0" "pyqtgraph>=0.13.0"
+        pip install pyinstaller
+
+    - name: Build binary
+      run: pyinstaller mcpower-gui.spec
+
+    - name: Verify binary exists (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        test -f dist/MCPower || { echo "Binary not found"; exit 1; }
+        size=$(stat -c%s dist/MCPower 2>/dev/null || stat -f%z dist/MCPower)
+        echo "Binary size: $size bytes"
+        [ "$size" -gt 10000000 ] || { echo "Binary too small ($size bytes)"; exit 1; }
+
+    - name: Verify binary exists (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        if (-not (Test-Path dist/MCPower.exe)) { Write-Error "Binary not found"; exit 1 }
+        $size = (Get-Item dist/MCPower.exe).Length
+        Write-Host "Binary size: $size bytes"
+        if ($size -lt 10000000) { Write-Error "Binary too small ($size bytes)"; exit 1 }
+
+    - name: Smoke test (Linux)
+      if: runner.os == 'Linux'
+      run: xvfb-run ./dist/MCPower --smoke-test
+
+    - name: Smoke test (macOS)
+      if: runner.os == 'macOS'
+      run: ./dist/MCPower --smoke-test
+
+    - name: Smoke test (Windows)
+      if: runner.os == 'Windows'
+      run: dist\MCPower.exe --smoke-test

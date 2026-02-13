@@ -40,3 +40,6 @@ include = ["mcpower_gui*"]
 
 [tool.setuptools.package-data]
 mcpower_gui = ["acknowledgments.txt", "cat.gif", "icon.png", "icon.ico", "icon.icns", "docs/*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
