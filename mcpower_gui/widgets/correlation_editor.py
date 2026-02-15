@@ -8,6 +8,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from mcpower_gui.theme import current_colors
+
 
 def _corr_key(a: str, b: str) -> str:
     """Canonical alphabetically-sorted correlation key."""
@@ -32,7 +34,7 @@ class CorrelationEditor(QWidget):
         self._grid.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
 
         self._placeholder = QLabel("Need at least 2 correlable variables.")
-        self._placeholder.setStyleSheet("color: gray;")
+        self._placeholder.setStyleSheet(f"color: {current_colors()['muted']};")
         self._grid.addWidget(self._placeholder, 0, 0)
 
     def set_variables(self, variables: list[str]):
@@ -49,7 +51,7 @@ class CorrelationEditor(QWidget):
 
         if len(variables) < 2:
             self._placeholder = QLabel("Need at least 2 correlable variables.")
-            self._placeholder.setStyleSheet("color: gray;")
+            self._placeholder.setStyleSheet(f"color: {current_colors()['muted']};")
             self._grid.addWidget(self._placeholder, 0, 0)
             return
 

@@ -2,7 +2,12 @@
 
 import numpy as np
 import pyqtgraph as pg
+from pyqtgraph import LabelItem
 from PySide6.QtWidgets import QVBoxLayout, QWidget
+
+from mcpower_gui.theme import current_colors
+
+_TAGLINE = "made in MCPower \u2014 simple Monte Carlo power analysis for complex models"
 
 # Distinguishable colors for up to 10 lines
 _COLORS = [
@@ -28,11 +33,14 @@ class PowerCurvePlot(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self._plot = pg.PlotWidget(title="Power vs Sample Size")
-        self._plot.setBackground("w")
+        colors = current_colors()
+        self._plot.setBackground(colors["plot_bg"])
         self._plot.showGrid(x=True, y=True)
         self._plot.setLabel("bottom", "Sample Size")
         self._plot.setLabel("left", "Power (%)")
         self._plot.addLegend()
+        tagline = LabelItem(_TAGLINE, size="9pt", color="#888888")
+        self._plot.plotItem.layout.addItem(tagline, 4, 1)
         layout.addWidget(self._plot)
 
     def update_plot(
@@ -44,6 +52,12 @@ class PowerCurvePlot(QWidget):
     ):
         """Redraw with new sample-size search results."""
         self._plot.clear()
+        colors = current_colors()
+        self._plot.setBackground(colors["plot_bg"])
+        for axis_name in ("left", "bottom"):
+            axis = self._plot.getAxis(axis_name)
+            axis.setPen(colors["plot_fg"])
+            axis.setTextPen(colors["plot_fg"])
         if not sample_sizes or not powers_by_test:
             return
 

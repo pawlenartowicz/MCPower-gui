@@ -5,6 +5,7 @@ from PySide6.QtGui import QMovie
 from PySide6.QtWidgets import QDialog, QLabel, QProgressBar, QPushButton, QVBoxLayout
 
 from mcpower_gui._resources import resource_path
+from mcpower_gui.theme import ThemeMode, current_mode
 
 
 class ProgressDialog(QDialog):
@@ -30,7 +31,7 @@ class ProgressDialog(QDialog):
         # Cat animation
         self._gif_label = QLabel()
         self._gif_label.setAlignment(Qt.AlignCenter)
-        gif_path = str(resource_path("cat.gif"))
+        gif_path = str(resource_path("media", "cat.gif"))
         self._movie = QMovie(gif_path)
         self._gif_label.setMovie(self._movie)
         layout.addWidget(self._gif_label)
@@ -63,6 +64,11 @@ class ProgressDialog(QDialog):
         self._abandon_btn.setEnabled(True)
         self._abandon_btn.setText("Abandon Simulation")
         self._progress_bar.setValue(0)
+        # Pick gif based on current theme
+        gif_name = "cat_dp.gif" if current_mode() == ThemeMode.DARK_PINK else "cat.gif"
+        gif_path = str(resource_path("media", gif_name))
+        self._movie = QMovie(gif_path)
+        self._gif_label.setMovie(self._movie)
         self._movie.start()
         self.show()
 

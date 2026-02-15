@@ -21,17 +21,17 @@ pkg_dir = Path("mcpower_gui")
 # copy_metadata bundles the .dist-info directory so that
 # importlib.metadata.version("MCPower") works in the frozen app.
 datas = [
-    (str(pkg_dir / "cat.gif"), "mcpower_gui"),
-    (str(pkg_dir / "icon.png"), "mcpower_gui"),
+    (str(pkg_dir / "media"), "mcpower_gui/media"),
+    (str(pkg_dir / "pl.freestylerscientist.mcpower.desktop"), "mcpower_gui"),
     (str(pkg_dir / "acknowledgments.txt"), "mcpower_gui"),
     (str(pkg_dir / "docs"), "mcpower_gui/docs"),
 ] + copy_metadata("MCPower")
 
 # ── Icon (per-OS format) ─────────────────────────────────────────
 if sys.platform == "win32":
-    app_icon = str(pkg_dir / "icon.ico")
+    app_icon = str(pkg_dir / "media" / "icon.ico")
 elif sys.platform == "darwin":
-    app_icon = str(pkg_dir / "icon.icns")
+    app_icon = str(pkg_dir / "media" / "icon.icns")
 else:
     app_icon = None
 

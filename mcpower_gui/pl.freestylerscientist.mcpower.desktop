@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=MCPower
+Comment=Monte Carlo Power Analysis
+Exec=mcpower-gui
+Icon=pl.freestylerscientist.mcpower
+Categories=Science;Education;
+StartupNotify=true

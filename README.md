@@ -1,5 +1,8 @@
+![Windows](https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white)
+![macOS](https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white)
+![Linux](https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-green.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16502734.svg)](https://doi.org/10.5281/zenodo.16502734)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.16502734-blue)](https://doi.org/10.5281/zenodo.16502734)
 
 ```
 ███╗   ███╗  ██████╗ ██████╗ 
@@ -22,6 +25,7 @@ MCPower GUI is a desktop application for **Monte Carlo power analysis**. It prov
 | **Windows** | [MCPower.exe](https://github.com/pawlenartowicz/mcpower-gui/releases/latest/download/MCPower.exe) |
 | **Linux** | [MCPower-linux](https://github.com/pawlenartowicz/mcpower-gui/releases/latest/download/MCPower-linux) |
 | **macOS** | [MCPower-macos](https://github.com/pawlenartowicz/mcpower-gui/releases/latest/download/MCPower-macos) |
+| **if above do not work** |[SourceForge](https://sourceforge.net/projects/mcpower/)|
 
 No Python installation required — these are standalone executables.
 

@@ -5,6 +5,8 @@ from itertools import combinations
 from PySide6.QtCore import QTimer, Signal
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QWidget
 
+from mcpower_gui.theme import current_colors
+
 
 def _expand_star_term(term: str) -> list[str]:
     """Expand ``x1*x2`` into ``[x1, x2, x1:x2]``."""
@@ -80,12 +82,12 @@ class FormulaInput(QWidget):
             self._status.setText(
                 f"Dependent: {dep_var} | Predictors: {', '.join(predictors)}"
             )
-            self._status.setStyleSheet("color: green;")
+            self._status.setStyleSheet(f"color: {current_colors()['success']};")
             self.formula_changed.emit(text, dep_var, predictors)
 
         except Exception as exc:
             self._status.setText(f"Parse error: {exc}")
-            self._status.setStyleSheet("color: red;")
+            self._status.setStyleSheet(f"color: {current_colors()['error']};")
 
     def set_formula(self, text: str):
         """Set formula text and parse immediately (no debounce)."""

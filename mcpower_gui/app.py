@@ -2,26 +2,31 @@
 
 import os
 
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import QTimer, QUrl
 from PySide6.QtGui import QAction, QDesktopServices
 from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QStatusBar,
     QTabWidget,
+    QVBoxLayout,
+    QWidget,
 )
 
+from mcpower_gui import __version__
 from mcpower_gui.history_manager import HistoryManager
 from mcpower_gui.script_generator import generate_script
 from mcpower_gui.state import ModelState
 from mcpower_gui.tabs.analysis_tab import AnalysisTab
 from mcpower_gui.tabs.model_tab import ModelTab
 from mcpower_gui.tabs.results_tab import ResultsTab
+from mcpower_gui.update_checker import UpdateChecker
 from mcpower_gui.widgets.acknowledgments_dialog import AcknowledgmentsDialog
 from mcpower_gui.widgets.documentation_dialog import DocumentationDialog
 from mcpower_gui.widgets.history_dialog import HistoryDialog
 from mcpower_gui.widgets.progress_dialog import ProgressDialog
 from mcpower_gui.widgets.settings_dialog import SettingsDialog
+from mcpower_gui.widgets.update_banner import UpdateBanner
 from mcpower_gui.worker import AnalysisWorker
 
 
@@ -66,9 +71,16 @@ class MainWindow(QMainWindow):
                 child.setStyleSheet("color: #e74c3c;")
                 break
 
-        # Tabs
+        # Central widget: update banner + tabs
         self._tabs = QTabWidget()
-        self.setCentralWidget(self._tabs)
+        self._update_banner = UpdateBanner()
+        central = QWidget()
+        vbox = QVBoxLayout(central)
+        vbox.setContentsMargins(0, 0, 0, 0)
+        vbox.setSpacing(0)
+        vbox.addWidget(self._update_banner)
+        vbox.addWidget(self._tabs)
+        self.setCentralWidget(central)
 
         self._model_tab = ModelTab(self._state)
         self._tabs.addTab(self._model_tab, "Model")
@@ -99,6 +111,14 @@ class MainWindow(QMainWindow):
         self._analysis_tab.run_sample_size_requested.connect(
             lambda params: self._run_analysis("sample_size", params)
         )
+
+        # Background update check (deferred until event loop starts)
+        QTimer.singleShot(0, self._start_update_check)
+
+    def _start_update_check(self):
+        self._update_checker = UpdateChecker(__version__, parent=self)
+        self._update_checker.update_available.connect(self._update_banner.show_update)
+        self._update_checker.start()
 
     def _run_analysis(self, mode: str, params: dict):
         if self._worker is not None and self._worker.isRunning():

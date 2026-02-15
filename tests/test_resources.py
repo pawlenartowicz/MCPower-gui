@@ -7,15 +7,15 @@ from mcpower_gui._resources import _base_path, resource_path
 
 class TestResources:
     def test_resource_path_returns_path(self):
-        result = resource_path("cat.gif")
+        result = resource_path("media", "cat.gif")
         assert isinstance(result, Path)
 
     def test_resource_path_cat_gif_exists(self):
-        p = resource_path("cat.gif")
+        p = resource_path("media", "cat.gif")
         assert p.exists(), f"Expected {p} to exist"
 
     def test_resource_path_icon_exists(self):
-        p = resource_path("icon.png")
+        p = resource_path("media", "icon.png")
         assert p.exists(), f"Expected {p} to exist"
 
     def test_resource_path_acknowledgments_exists(self):

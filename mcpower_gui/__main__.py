@@ -1,6 +1,7 @@
 """Entry point for `python -m mcpower_gui`."""
 
 import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -8,6 +9,41 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
 from mcpower_gui import __version__
+
+
+def _install_linux_desktop_integration() -> None:
+    """Install .desktop file and icon so Linux DEs show the app icon."""
+    if sys.platform != "linux":
+        return
+
+    pkg_dir = Path(__file__).parent
+    data_home = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
+
+    # Install icon to XDG icon directory
+    icon_src = pkg_dir / "media" / "icon.png"
+    icon_dst = (
+        data_home
+        / "icons"
+        / "hicolor"
+        / "256x256"
+        / "apps"
+        / "pl.freestylerscientist.mcpower.png"
+    )
+    if icon_src.exists() and (
+        not icon_dst.exists() or icon_src.stat().st_mtime > icon_dst.stat().st_mtime
+    ):
+        icon_dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(icon_src, icon_dst)
+
+    # Install .desktop file
+    desktop_src = pkg_dir / "pl.freestylerscientist.mcpower.desktop"
+    desktop_dst = data_home / "applications" / "pl.freestylerscientist.mcpower.desktop"
+    if desktop_src.exists() and (
+        not desktop_dst.exists()
+        or desktop_src.stat().st_mtime > desktop_dst.stat().st_mtime
+    ):
+        desktop_dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(desktop_src, desktop_dst)
 
 
 def _smoke_test() -> None:
@@ -36,6 +72,10 @@ def _smoke_test() -> None:
     if app is None:
         errors.append("QApplication creation failed")
 
+    from mcpower_gui.theme import apply_theme
+
+    apply_theme()
+
     # 3. MainWindow creation
     try:
         from mcpower_gui.app import MainWindow
@@ -48,7 +88,7 @@ def _smoke_test() -> None:
     # 4. Bundled resources
     from mcpower_gui._resources import resource_path
 
-    for name in ["cat.gif", "icon.png", "acknowledgments.txt"]:
+    for name in ["media/cat.gif", "media/icon.png", "acknowledgments.txt"]:
         p = resource_path(name)
         if not p.exists():
             errors.append(f"Missing resource: {name}")
@@ -93,12 +133,18 @@ def main():
     if "--smoke-test" in sys.argv:
         _smoke_test()
 
+    _install_linux_desktop_integration()
+
     app = QApplication(sys.argv)
     app.setApplicationName("MCPower")
     app.setApplicationVersion(__version__)
     app.setDesktopFileName("pl.freestylerscientist.mcpower")
 
-    icon_path = Path(__file__).parent / "icon.png"
+    from mcpower_gui.theme import apply_theme
+
+    apply_theme()
+
+    icon_path = Path(__file__).parent / "media" / "icon.png"
     if icon_path.exists():
         app.setWindowIcon(QIcon(str(icon_path)))
 

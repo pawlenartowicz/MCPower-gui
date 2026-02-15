@@ -2,7 +2,12 @@
 
 import numpy as np
 import pyqtgraph as pg
+from pyqtgraph import LabelItem
 from PySide6.QtWidgets import QVBoxLayout, QWidget
+
+from mcpower_gui.theme import current_colors
+
+_TAGLINE = "made in MCPower \u2014 simple Monte Carlo power analysis for complex models"
 
 
 class PowerBarChart(QWidget):
@@ -14,9 +19,12 @@ class PowerBarChart(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self._plot = pg.PlotWidget(title="Power by Effect")
-        self._plot.setBackground("w")
+        colors = current_colors()
+        self._plot.setBackground(colors["plot_bg"])
         self._plot.showGrid(x=True, y=False)
         self._plot.setLabel("bottom", "Power (%)")
+        tagline = LabelItem(_TAGLINE, size="9pt", color="#888888")
+        self._plot.plotItem.layout.addItem(tagline, 4, 1)
         layout.addWidget(self._plot)
 
         self._target_line = None
@@ -33,6 +41,12 @@ class PowerBarChart(QWidget):
             Target power line (e.g. 80.0).
         """
         self._plot.clear()
+        colors = current_colors()
+        self._plot.setBackground(colors["plot_bg"])
+        for axis_name in ("left", "bottom"):
+            axis = self._plot.getAxis(axis_name)
+            axis.setPen(colors["plot_fg"])
+            axis.setTextPen(colors["plot_fg"])
         if not powers:
             return
 

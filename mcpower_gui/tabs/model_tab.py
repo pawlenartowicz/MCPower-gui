@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
 )
 
 from mcpower_gui.state import ModelState
+from mcpower_gui.theme import current_colors
 from mcpower_gui.widgets.correlation_editor import CorrelationEditor, _corr_key
 from mcpower_gui.widgets.effects_editor import EffectsEditor
 from mcpower_gui.widgets.formula_input import FormulaInput
@@ -83,7 +84,9 @@ class ModelTab(QWidget):
 
         self._columns_label = QLabel("")
         self._columns_label.setWordWrap(True)
-        self._columns_label.setStyleSheet("color: #888; font-size: 11px;")
+        self._columns_label.setStyleSheet(
+            f"color: {current_colors()['muted']}; font-size: 11px;"
+        )
         dg_layout.addWidget(self._columns_label)
 
         root.addWidget(data_group)

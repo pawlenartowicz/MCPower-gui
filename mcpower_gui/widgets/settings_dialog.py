@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
 )
 
 from mcpower_gui.state import SCENARIO_DEFAULTS, ModelState
+from mcpower_gui.theme import ThemeMode, apply_theme, save_theme_mode, saved_theme_mode
 
 
 class SettingsDialog(QDialog):
@@ -27,12 +28,29 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Settings")
         self._state = state
+        self._original_theme = saved_theme_mode()
 
         root = QVBoxLayout(self)
 
         # ── General ──────────────────────────────────────────
         general = QGroupBox("General")
         gf = QFormLayout(general)
+
+        self._theme = QComboBox()
+        self._theme.addItem("System", ThemeMode.SYSTEM.value)
+        self._theme.addItem("Light", ThemeMode.LIGHT.value)
+        self._theme.addItem("Dark", ThemeMode.DARK.value)
+        self._theme.addItem("Dark Pink", ThemeMode.DARK_PINK.value)
+        current = saved_theme_mode()
+        _theme_map = {
+            ThemeMode.SYSTEM: 0,
+            ThemeMode.LIGHT: 1,
+            ThemeMode.DARK: 2,
+            ThemeMode.DARK_PINK: 3,
+        }
+        self._theme.setCurrentIndex(_theme_map.get(current, 0))
+        self._theme.currentIndexChanged.connect(self._on_theme_changed)
+        gf.addRow("Theme:", self._theme)
 
         self._n_simulations = QSpinBox()
         self._n_simulations.setRange(100, 100_000)
@@ -168,6 +186,16 @@ class SettingsDialog(QDialog):
             spins[key] = spin
         return group, spins
 
+    def _on_theme_changed(self):
+        """Live-preview the selected theme."""
+        mode = ThemeMode(self._theme.currentData())
+        apply_theme(mode)
+
+    def reject(self):
+        """Revert theme to original on Cancel."""
+        apply_theme(self._original_theme)
+        super().reject()
+
     def _apply_and_accept(self):
         """Write widget values to state and close."""
         s = self._state
@@ -183,4 +211,7 @@ class SettingsDialog(QDialog):
             name: {key: spins[key].value() for key in spins}
             for name, spins in self._scenario_spins.items()
         }
+        mode = ThemeMode(self._theme.currentData())
+        save_theme_mode(mode)
+        apply_theme(mode)
         self.accept()

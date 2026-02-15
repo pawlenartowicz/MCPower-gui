@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mcpower-gui"
-dynamic = ["version"]
+version = "0.1.1rc0"
 description = "PySide6 desktop GUI for MCPower Monte Carlo power analysis"
 license = {text = "GPL-3.0-or-later"}
 authors = [
@@ -31,15 +31,12 @@ mcpower-gui = "mcpower_gui.__main__:main"
 [project.gui-scripts]
 mcpower-gui = "mcpower_gui.__main__:main"
 
-[tool.setuptools.dynamic]
-version = {attr = "mcpower_gui.__version__"}
-
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["mcpower_gui*"]
 
 [tool.setuptools.package-data]
-mcpower_gui = ["acknowledgments.txt", "cat.gif", "icon.png", "icon.ico", "icon.icns", "docs/*.md"]
+mcpower_gui = ["acknowledgments.txt", "media/*.gif", "media/*.png", "media/*.ico", "media/*.icns", "*.desktop", "docs/*.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

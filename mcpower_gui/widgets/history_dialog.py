@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from mcpower_gui.history_manager import HistoryManager
+from mcpower_gui.theme import current_colors
 
 
 class HistoryDialog(QDialog):
@@ -55,7 +56,9 @@ class HistoryDialog(QDialog):
         records = self._history.list_records()
         if not records:
             placeholder = QLabel("No history entries yet.")
-            placeholder.setStyleSheet("color: #888; padding: 20px;")
+            placeholder.setStyleSheet(
+                f"color: {current_colors()['muted']}; padding: 20px;"
+            )
             layout.addWidget(placeholder)
         else:
             for rec in records:
@@ -67,9 +70,10 @@ class HistoryDialog(QDialog):
     def _make_entry(self, rec: dict) -> QWidget:
         """Create a single history entry widget."""
         entry = QWidget()
+        colors = current_colors()
         entry.setStyleSheet(
-            "QWidget { border: 1px solid #ddd; border-radius: 4px; "
-            "padding: 6px; margin: 2px; }"
+            f"QWidget {{ border: 1px solid {colors['border']}; border-radius: 4px; "
+            f"padding: 6px; margin: 2px; }}"
         )
         row = QHBoxLayout(entry)
 
@@ -114,7 +118,7 @@ class HistoryDialog(QDialog):
             detail_parts.append(f"correction: {correction}")
 
         detail = QLabel(" | ".join(detail_parts))
-        detail.setStyleSheet("color: #666; font-size: 11px;")
+        detail.setStyleSheet(f"color: {current_colors()['muted']}; font-size: 11px;")
         detail.setWordWrap(True)
         info.addWidget(detail)
         row.addLayout(info, stretch=1)
