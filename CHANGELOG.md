@@ -2,7 +2,7 @@
 
 All notable changes to MCPower GUI are documented in this file.
 
-## [0.1.1rc0] — Unreleased
+## [0.1.1] — 2026-02-16
 
 ### Added
 
