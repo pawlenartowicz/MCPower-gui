@@ -75,6 +75,14 @@ Statistical power is the probability that a study will detect a real effect when
 
 Traditional power formulas work for simple designs but break down with interactions, correlated predictors, categorical variables, or non-normal data. MCPower uses **Monte Carlo simulation** — it generates thousands of synthetic datasets under your assumptions, fits the statistical model to each, and counts how often the effects are detected. This approach handles arbitrary complexity.
 
+## Why MCPower?
+
+**Just type your formula.** Enter your model the way you'd write it in R or a stats textbook — `outcome = treatment + covariate + treatment*covariate`. MCPower handles everything else: parsing the formula, setting up the simulation, and managing interactions and factor coding. No programming required. More model types (logistic regression, ANOVA) are coming soon.
+
+**Scenarios show you the full picture.** Real studies rarely match textbook conditions — effect sizes may be smaller than expected, distributions may be skewed, or variance may not be constant. One checkbox enables automatic robustness testing. MCPower runs your analysis under optimistic, realistic, and worst-case conditions, so instead of a single number you get a range that shows how sensitive your design is to violated assumptions.
+
+**Upload your data, skip the guesswork.** Drop in a CSV and MCPower auto-detects variable types (continuous, binary, or categorical), preserves real distributions, and handles correlations between predictors. String columns (e.g. "control", "drug_a", "drug_b") are supported and auto-detected as factors. Factor levels use the original values from your data — so `cyl` with values [4, 6, 8] shows up as `cyl[4]`, `cyl[6]`, `cyl[8]` instead of abstract indices. No need to manually specify whether each variable is normal, skewed, or categorical — MCPower samples from the empirical distribution. This is especially useful when you have pilot data or a related dataset and want your power analysis to reflect actual conditions.
+
 ## App workflow
 
 1. **Model tab** — Define your study design: enter a formula, set variable types, specify effect sizes, and optionally upload empirical data with correlations.

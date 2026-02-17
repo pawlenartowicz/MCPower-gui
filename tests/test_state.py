@@ -70,11 +70,14 @@ class TestModelState:
         state = ModelState()
         snap = state.snapshot()
         expected_keys = {
+            "model_type",
             "formula",
             "dep_var",
             "predictors",
             "effects",
             "variable_types",
+            "anova_factors",
+            "anova_interactions",
             "n_simulations",
             "n_simulations_mixed_model",
             "alpha",
@@ -86,6 +89,8 @@ class TestModelState:
             "preserve_correlation",
             "correlations",
             "scenario_configs",
+            "factor_level_labels",
+            "factor_reference_levels",
         }
         assert set(snap.keys()) == expected_keys
 
@@ -104,7 +109,5 @@ class TestModelState:
         assert roundtrip["effects"]["x1"] == 0.5
 
     def test_build_variable_type_string_method(self):
-        state = ModelState(
-            variable_types={"x1": {"type": "binary", "proportion": 0.4}}
-        )
+        state = ModelState(variable_types={"x1": {"type": "binary", "proportion": 0.4}})
         assert state.build_variable_type_string() == "x1=(binary, 0.4)"

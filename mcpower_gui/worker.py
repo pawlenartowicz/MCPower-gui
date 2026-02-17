@@ -68,9 +68,21 @@ class AnalysisWorker(QThread):
 
             # Upload data if present (before set_variable_type and set_effects)
             if self._uploaded_data is not None:
+                # Build data_types with reference levels for non-default refs
+                data_types = {}
+                factor_refs = snap.get("factor_reference_levels", {})
+                factor_labels = snap.get("factor_level_labels", {})
+                for factor_name, ref_level in factor_refs.items():
+                    level_labels = factor_labels.get(factor_name, [])
+                    if level_labels and ref_level != level_labels[0]:
+                        # Non-default reference — pass as tuple
+                        data_types[factor_name] = ("factor", ref_level)
+
                 model.upload_data(
                     self._uploaded_data,
                     preserve_correlation=snap["preserve_correlation"],
+                    preserve_factor_level_names=True,
+                    data_types=data_types if data_types else None,
                 )
 
             # Set variable types if any non-continuous
@@ -96,9 +108,7 @@ class AnalysisWorker(QThread):
             if snap["scenario_configs"]:
                 model.set_scenario_configs(snap["scenario_configs"])
             if snap["correlations"]:
-                model.set_correlations(
-                    build_correlations_string(snap["correlations"])
-                )
+                model.set_correlations(build_correlations_string(snap["correlations"]))
             model.apply()
 
             # Extract per-run params

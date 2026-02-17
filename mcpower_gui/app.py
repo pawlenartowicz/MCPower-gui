@@ -67,7 +67,10 @@ class MainWindow(QMainWindow):
 
         # Style the support action with accent color
         for child in self.menuBar().children():
-            if hasattr(child, "defaultAction") and child.defaultAction() == support_action:
+            if (
+                hasattr(child, "defaultAction")
+                and child.defaultAction() == support_action
+            ):
                 child.setStyleSheet("color: #e74c3c;")
                 break
 
@@ -110,6 +113,10 @@ class MainWindow(QMainWindow):
         )
         self._analysis_tab.run_sample_size_requested.connect(
             lambda params: self._run_analysis("sample_size", params)
+        )
+        self._model_tab.model_type_changed.connect(self._analysis_tab.set_model_type)
+        self._model_tab.available_factors_changed.connect(
+            self._analysis_tab.set_available_factors
         )
 
         # Background update check (deferred until event loop starts)
@@ -158,8 +165,14 @@ class MainWindow(QMainWindow):
         target_power = state_snapshot.get("target_power", 80.0)
 
         script = generate_script(state_snapshot, analysis_params, mode, data_file_path)
+        model_type = state_snapshot.get("model_type", "linear_regression")
         self._results_tab.add_result(
-            mode, result, target_power, script, analysis_params=analysis_params
+            mode,
+            result,
+            target_power,
+            script,
+            analysis_params=analysis_params,
+            model_type=model_type,
         )
         self._history.save(
             mode,
@@ -232,19 +245,28 @@ class MainWindow(QMainWindow):
             "max_failed_simulations", 0.03
         )
         self._state.parallel = snapshot.get("parallel", "mixedmodels")
-        self._state.n_cores = snapshot.get("n_cores", max(1, (os.cpu_count() or 4) // 2))
+        self._state.n_cores = snapshot.get(
+            "n_cores", max(1, (os.cpu_count() or 4) // 2)
+        )
         sc = snapshot.get("scenario_configs")
         if sc is not None:
             self._state.scenario_configs = {k: dict(v) for k, v in sc.items()}
 
         # 3. Restore analysis tab widgets
+        model_type = snapshot.get("model_type", "linear_regression")
+        self._analysis_tab.set_model_type(model_type)
         analysis_params_with_tp = dict(analysis_params)
         analysis_params_with_tp["target_power"] = target_power
         self._analysis_tab.restore_params(analysis_params_with_tp)
 
         # 4. Create result subtab from stored data
         self._results_tab.add_result(
-            mode, result, target_power, script, analysis_params=analysis_params
+            mode,
+            result,
+            target_power,
+            script,
+            analysis_params=analysis_params,
+            model_type=model_type,
         )
 
         # 5. Notify about data file

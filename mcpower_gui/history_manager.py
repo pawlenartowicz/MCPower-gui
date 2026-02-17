@@ -64,11 +64,14 @@ class HistoryManager:
                         "id": data["id"],
                         "timestamp": data["timestamp"],
                         "mode": data["mode"],
+                        "model_type": snap.get("model_type", "linear_regression"),
                         "formula": snap.get("formula", ""),
                         "sample_size": aparams.get("sample_size"),
                         "alpha": snap.get("alpha"),
                         "n_simulations": snap.get("n_simulations"),
-                        "n_simulations_mixed_model": snap.get("n_simulations_mixed_model"),
+                        "n_simulations_mixed_model": snap.get(
+                            "n_simulations_mixed_model"
+                        ),
                         "data_file_path": data.get("data_file_path"),
                         "test_formula": aparams.get("test_formula", ""),
                         "correction": aparams.get("correction", ""),

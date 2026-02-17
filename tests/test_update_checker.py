@@ -16,10 +16,12 @@ def _mock_response(body: bytes):
 
 class TestCheckForUpdate:
     def test_newer_version_available(self):
-        body = json.dumps({
-            "tag_name": "v1.0.0",
-            "html_url": "https://github.com/pawlenartowicz/mcpower-gui/releases/tag/v1.0.0",
-        }).encode()
+        body = json.dumps(
+            {
+                "tag_name": "v1.0.0",
+                "html_url": "https://github.com/pawlenartowicz/mcpower-gui/releases/tag/v1.0.0",
+            }
+        ).encode()
 
         with patch("urllib.request.urlopen", return_value=_mock_response(body)):
             result = check_for_update("0.1.0")
@@ -30,19 +32,23 @@ class TestCheckForUpdate:
         assert "releases/tag/v1.0.0" in url
 
     def test_same_version_returns_none(self):
-        body = json.dumps({
-            "tag_name": "v0.1.0",
-            "html_url": "https://github.com/pawlenartowicz/mcpower-gui/releases/tag/v0.1.0",
-        }).encode()
+        body = json.dumps(
+            {
+                "tag_name": "v0.1.0",
+                "html_url": "https://github.com/pawlenartowicz/mcpower-gui/releases/tag/v0.1.0",
+            }
+        ).encode()
 
         with patch("urllib.request.urlopen", return_value=_mock_response(body)):
             assert check_for_update("0.1.0") is None
 
     def test_older_version_returns_none(self):
-        body = json.dumps({
-            "tag_name": "v0.0.9",
-            "html_url": "https://github.com/pawlenartowicz/mcpower-gui/releases/tag/v0.0.9",
-        }).encode()
+        body = json.dumps(
+            {
+                "tag_name": "v0.0.9",
+                "html_url": "https://github.com/pawlenartowicz/mcpower-gui/releases/tag/v0.0.9",
+            }
+        ).encode()
 
         with patch("urllib.request.urlopen", return_value=_mock_response(body)):
             assert check_for_update("0.1.0") is None
@@ -62,10 +68,12 @@ class TestCheckForUpdate:
             assert check_for_update("0.1.0") is None
 
     def test_prerelease_current_is_older_than_stable_release(self):
-        body = json.dumps({
-            "tag_name": "v0.1.1",
-            "html_url": "https://github.com/pawlenartowicz/mcpower-gui/releases/tag/v0.1.1",
-        }).encode()
+        body = json.dumps(
+            {
+                "tag_name": "v0.1.1",
+                "html_url": "https://github.com/pawlenartowicz/mcpower-gui/releases/tag/v0.1.1",
+            }
+        ).encode()
 
         with patch("urllib.request.urlopen", return_value=_mock_response(body)):
             result = check_for_update("0.1.1rc0")
@@ -74,10 +82,12 @@ class TestCheckForUpdate:
         assert result[0] == "0.1.1"
 
     def test_prerelease_remote_is_ignored(self):
-        body = json.dumps({
-            "tag_name": "v0.1.1rc1",
-            "html_url": "https://github.com/pawlenartowicz/mcpower-gui/releases/tag/v0.1.1rc1",
-        }).encode()
+        body = json.dumps(
+            {
+                "tag_name": "v0.1.1rc1",
+                "html_url": "https://github.com/pawlenartowicz/mcpower-gui/releases/tag/v0.1.1rc1",
+            }
+        ).encode()
 
         with patch("urllib.request.urlopen", return_value=_mock_response(body)):
             assert check_for_update("0.1.1rc0") is None

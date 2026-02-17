@@ -13,8 +13,7 @@ from PySide6.QtWidgets import QApplication
 # Ensure a QApplication exists before importing theme
 _app = QApplication.instance() or QApplication(sys.argv)
 
-from mcpower_gui import theme
-from mcpower_gui.theme import (
+from mcpower_gui.theme import (  # noqa: E402
     ThemeMode,
     apply_theme,
     current_colors,
@@ -142,19 +141,29 @@ class TestDarkPinkTheme:
         bright = palette.color(QPalette.ColorRole.BrightText)
         assert bright == QColor("#ff80ab")
 
-    def test_dark_pink_same_base_as_dark(self):
+    def test_dark_pink_has_pink_tinted_base(self):
         apply_theme(ThemeMode.DARK_PINK)
         dp_base = _app.palette().color(QPalette.ColorRole.Base)
-        apply_theme(ThemeMode.DARK)
-        dark_base = _app.palette().color(QPalette.ColorRole.Base)
-        assert dp_base == dark_base
+        assert dp_base == QColor(40, 32, 36)
 
-    def test_dark_pink_colors_same_as_dark(self):
+    def test_dark_pink_has_pink_tinted_window(self):
+        apply_theme(ThemeMode.DARK_PINK)
+        window = _app.palette().color(QPalette.ColorRole.Window)
+        assert window == QColor(58, 48, 53)
+
+    def test_dark_pink_has_pink_mid(self):
+        apply_theme(ThemeMode.DARK_PINK)
+        mid = _app.palette().color(QPalette.ColorRole.Mid)
+        assert mid == QColor(100, 70, 85)
+
+    def test_dark_pink_colors_differ_from_dark(self):
         apply_theme(ThemeMode.DARK_PINK)
         dp_colors = current_colors()
         apply_theme(ThemeMode.DARK)
         dark_colors = current_colors()
-        assert dp_colors == dark_colors
+        assert dp_colors != dark_colors
+        assert dp_colors["border"] == "#6a2a4a"
+        assert dp_colors["muted"] == "#aa7891"
 
     def test_current_mode_tracks_dark_pink(self):
         apply_theme(ThemeMode.DARK_PINK)

@@ -18,9 +18,7 @@ class ProgressDialog(QDialog):
         self.setWindowTitle("Running Analysis...")
         self.setFixedSize(580, 500)
         self.setWindowFlags(
-            self.windowFlags()
-            & ~Qt.WindowContextHelpButtonHint
-            | Qt.WindowTitleHint
+            self.windowFlags() & ~Qt.WindowContextHelpButtonHint | Qt.WindowTitleHint
         )
 
         self._cancelling = False

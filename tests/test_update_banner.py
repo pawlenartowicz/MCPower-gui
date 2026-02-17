@@ -8,7 +8,8 @@ from PySide6.QtWidgets import QApplication
 
 app = QApplication.instance() or QApplication([])
 
-from mcpower_gui.widgets.update_banner import UpdateBanner
+from mcpower_gui.theme import ThemeMode, apply_theme  # noqa: E402
+from mcpower_gui.widgets.update_banner import UpdateBanner  # noqa: E402
 
 
 class TestUpdateBanner:
@@ -31,3 +32,22 @@ class TestUpdateBanner:
         banner = UpdateBanner()
         banner.show_update("2.0.0", "https://example.com/release")
         assert "2.0.0" in banner._label.text()
+
+    def test_style_updates_on_theme_change(self):
+        apply_theme(ThemeMode.LIGHT)
+        banner = UpdateBanner()
+        light_style = banner.styleSheet()
+        apply_theme(ThemeMode.DARK)
+        dark_style = banner.styleSheet()
+        assert light_style != dark_style
+        assert "#1a3a4a" in dark_style  # dark bg color
+        apply_theme(ThemeMode.LIGHT)
+
+    def test_dark_pink_uses_pink_style(self):
+        apply_theme(ThemeMode.DARK_PINK)
+        banner = UpdateBanner()
+        style = banner.styleSheet()
+        assert "#3a1a2a" in style  # dark pink bg color
+        link_style = banner._download_btn.styleSheet()
+        assert "#f48fb1" in link_style  # pink link color
+        apply_theme(ThemeMode.LIGHT)

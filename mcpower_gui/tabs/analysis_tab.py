@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QFormLayout,
     QGroupBox,
+    QLabel,
     QLineEdit,
     QMessageBox,
     QPushButton,
@@ -16,6 +17,8 @@ from PySide6.QtWidgets import (
 )
 
 from mcpower_gui.state import ModelState
+from mcpower_gui.widgets.info_button import attach_info_button
+from mcpower_gui.widgets.post_hoc_selector import PostHocSelector
 from mcpower_gui.widgets.target_test_selector import TargetTestSelector
 
 
@@ -51,16 +54,36 @@ class AnalysisTab(QWidget):
 
         self._correction = QComboBox()
         self._correction.addItems(["None", "Bonferroni", "Benjamini-Hochberg", "Holm"])
-        cf.addRow("Correction:", self._correction)
+        self._correction_label = QLabel("Correction:")
+        cf.addRow(self._correction_label, self._correction)
 
         self._target_tests = TargetTestSelector()
-        cf.addRow("Target tests:", self._target_tests)
+        self._target_tests_label = QLabel("Target tests:")
+        cf.addRow(self._target_tests_label, self._target_tests)
 
         self._test_formula = QLineEdit()
         self._test_formula.setPlaceholderText("Leave empty to use model formula")
-        cf.addRow("Test formula:", self._test_formula)
+        self._test_formula_label = QLabel("Test formula:")
+        cf.addRow(self._test_formula_label, self._test_formula)
 
         root.addWidget(common_group)
+        attach_info_button(
+            common_group, "analysis_tab.md", "Common Analysis Settings", "Analysis Tab"
+        )
+
+        # ── Post Hoc Pairwise Comparisons ─────────────────────
+        self._post_hoc_group = QGroupBox("Post Hoc Pairwise Comparisons")
+        ph_layout = QVBoxLayout(self._post_hoc_group)
+        self._post_hoc_selector = PostHocSelector()
+        ph_layout.addWidget(self._post_hoc_selector)
+        self._post_hoc_group.hide()
+        root.addWidget(self._post_hoc_group)
+        attach_info_button(
+            self._post_hoc_group,
+            "analysis_tab.md",
+            "Post Hoc Pairwise Comparisons",
+            "Analysis Tab",
+        )
 
         # ── Find Power ───────────────────────────────────────
         power_group = QGroupBox("Find Power")
@@ -77,6 +100,7 @@ class AnalysisTab(QWidget):
         pf.addRow(self._btn_power)
 
         root.addWidget(power_group)
+        attach_info_button(power_group, "analysis_tab.md", "Find Power", "Analysis Tab")
 
         # ── Find Sample Size ─────────────────────────────────
         ss_group = QGroupBox("Find Sample Size")
@@ -104,6 +128,9 @@ class AnalysisTab(QWidget):
         sf.addRow(self._btn_ss)
 
         root.addWidget(ss_group)
+        attach_info_button(
+            ss_group, "analysis_tab.md", "Find Sample Size", "Analysis Tab"
+        )
 
         root.addStretch()
 
@@ -113,9 +140,46 @@ class AnalysisTab(QWidget):
 
     # ── Public API ───────────────────────────────────────────
 
+    def set_model_type(self, model_type: str):
+        """Enforce ANOVA constraints on target tests/test formula.
+
+        Tukey HSD is only available in ANOVA mode.
+        """
+        is_anova = model_type == "anova"
+        self._correction.setEnabled(True)
+        self._correction_label.setEnabled(True)
+
+        # Add/remove Tukey HSD based on model type
+        tukey_idx = self._correction.findText("Tukey HSD")
+        if is_anova:
+            if tukey_idx == -1:
+                self._correction.addItem("Tukey HSD")
+            self._target_tests_label.hide()
+            self._target_tests.hide()
+            self._test_formula_label.hide()
+            self._test_formula.hide()
+        else:
+            if tukey_idx != -1:
+                # Reset to "None" if Tukey was selected before removing
+                if self._correction.currentIndex() == tukey_idx:
+                    self._correction.setCurrentIndex(0)
+                self._correction.removeItem(tukey_idx)
+            self._target_tests_label.show()
+            self._target_tests.show()
+            self._test_formula_label.show()
+            self._test_formula.show()
+
     def set_available_tests(self, tests: list[str]):
         """Rebuild the target test checklist with *tests*."""
         self._target_tests.set_tests(tests)
+
+    def set_available_factors(self, factors: dict[str, int]):
+        """Update post hoc selector with current factor variables."""
+        self._post_hoc_selector.set_factors(factors)
+        if self._post_hoc_selector.has_any_factors():
+            self._post_hoc_group.show()
+        else:
+            self._post_hoc_group.hide()
 
     def set_model_ready(self, ready: bool):
         """Enable/disable run buttons based on model readiness."""
@@ -139,12 +203,40 @@ class AnalysisTab(QWidget):
 
     def _gather_common_params(self) -> dict:
         """Read shared widgets into a parameter dict."""
-        correction = self._correction.currentText()
+        correction_text = self._correction.currentText()
+        if correction_text == "Tukey HSD":
+            correction = "tukey"
+        elif correction_text == "None":
+            correction = ""
+        else:
+            correction = correction_text
+
+        post_hoc = self._post_hoc_selector.get_selected()
+
+        if self._state.model_type == "anova":
+            # ANOVA: base target is "overall", append post hoc selections
+            parts = ["overall"]
+            parts.extend(post_hoc)
+            target_test = ", ".join(parts)
+            return {
+                "scenarios": self._scenarios.isChecked(),
+                "summary": "short",
+                "correction": correction,
+                "target_test": target_test,
+                "test_formula": "",
+            }
+
+        # Linear regression: use target test selector + append post hoc
+        base_target = self._target_tests.get_value()
+        if post_hoc:
+            target_test = base_target + ", " + ", ".join(post_hoc)
+        else:
+            target_test = base_target
         return {
             "scenarios": self._scenarios.isChecked(),
             "summary": "short",
-            "correction": "" if correction == "None" else correction,
-            "target_test": self._target_tests.get_value(),
+            "correction": correction,
+            "target_test": target_test,
             "test_formula": self._test_formula.text().strip(),
         }
 
@@ -187,6 +279,8 @@ class AnalysisTab(QWidget):
         correction = analysis_params.get("correction", "")
         if not correction:
             self._correction.setCurrentText("None")
+        elif correction.lower() == "tukey":
+            self._correction.setCurrentText("Tukey HSD")
         else:
             # Try case-insensitive match
             for i in range(self._correction.count()):
@@ -220,3 +314,6 @@ class AnalysisTab(QWidget):
         ss_by = analysis_params.get("ss_by")
         if ss_by is not None:
             self._ss_by.setValue(ss_by)
+
+        # Apply model type constraints
+        self.set_model_type(self._state.model_type)

@@ -9,8 +9,12 @@ def _dummy_record(**overrides):
     record = {
         "mode": "power",
         "result": {"power": 0.8},
-        "state_snapshot": {"formula": "y = x1", "alpha": 0.05, "n_simulations": 1600,
-                           "n_simulations_mixed_model": 400},
+        "state_snapshot": {
+            "formula": "y = x1",
+            "alpha": 0.05,
+            "n_simulations": 1600,
+            "n_simulations_mixed_model": 400,
+        },
         "analysis_params": {"sample_size": 100},
         "data_file_path": None,
         "script": "# test script",

@@ -79,7 +79,11 @@ class HistoryDialog(QDialog):
 
         # Info column
         info = QVBoxLayout()
-        mode_label = "Find Power" if rec["mode"] == "power" else "Find Sample Size"
+        model_type = rec.get("model_type", "linear_regression")
+        type_tag = " [ANOVA]" if model_type == "anova" else ""
+        mode_label = (
+            "Find Power" if rec["mode"] == "power" else "Find Sample Size"
+        ) + type_tag
         ts = rec.get("timestamp", "")
         try:
             dt = datetime.fromisoformat(ts)

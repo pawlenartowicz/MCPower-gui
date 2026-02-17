@@ -44,13 +44,27 @@ Standard normal distribution (mean=0, SD=1). When empirical data is uploaded, th
 Two-level variable (0/1). The **proportion** parameter sets the probability of the higher level. Default is 0.50 (balanced groups).
 
 ### Factor
-Categorical variable with 2-20 levels. Internally represented as dummy variables with level 1 as the reference category. A 3-level factor produces two dummy predictors. Each level has a proportion parameter controlling how observations are distributed across categories.
+Categorical variable with 2-20 levels. Internally represented as dummy variables. A 3-level factor produces two dummy predictors. Each level has a proportion parameter controlling how observations are distributed across categories.
+
+When data is uploaded, factor dummies use the **original values** from the data as level names. For example, `cyl` with values [4, 6, 8] produces dummies `cyl[6]` and `cyl[8]`, with `cyl[4]` as the reference. **String columns** are also supported — `origin` with values ["Europe", "Japan", "USA"] produces `origin[Japan]` and `origin[USA]`, with "Europe" as the reference. The default reference level is the first sorted value (alphabetically for strings, numerically for numbers).
+
+Without uploaded data, levels are integer-indexed: a 3-level factor `group` produces dummies `group[2]` and `group[3]`, with level 1 as reference.
 
 ## Interactions
 
 Interaction terms (e.g., `x1:x2`) test whether the effect of one predictor depends on the level of another. In the formula, use `:` for a specific interaction or `*` as shorthand for all main effects plus their interaction.
 
-When a factor variable is involved in an interaction, it is expanded into all combinations of the factor's dummy levels. For example, `x1:group` with a 3-level factor `group` becomes `x1:group[2]` and `x1:group[3]`.
+When a factor variable is involved in an interaction, it is expanded into all combinations of the factor's dummy levels. For example, `x1:group` with a 3-level factor `group` becomes `x1:group[2]` and `x1:group[3]` (or `x1:group[B]` and `x1:group[C]` when data with named levels is uploaded).
+
+## Post Hoc Comparisons
+
+Post hoc (pairwise) comparisons test for differences between specific pairs of factor levels after finding a significant overall effect. For example, if a 3-level factor "treatment" is significant overall, post hoc comparisons tell you which specific pairs differ.
+
+When data is uploaded, pairwise comparisons use the **original level names**: e.g. `origin[Europe] vs origin[Japan]`, `origin[Europe] vs origin[USA]`, `origin[Japan] vs origin[USA]`. Without uploaded data, comparisons use integer indices: `treatment[1] vs treatment[2]`, `treatment[1] vs treatment[3]`, `treatment[2] vs treatment[3]`.
+
+Post hoc comparisons use individual t-tests by default. To control the family-wise error rate across multiple comparisons, apply a correction method:
+- **Tukey HSD** — Designed specifically for pairwise comparisons. Controls family-wise error rate while maintaining good power. When applied, only contrast-based tests (pairwise comparisons) receive corrected p-values; non-contrast tests show "-".
+- **Bonferroni / Holm / Benjamini-Hochberg** — General-purpose corrections that also work with post hoc comparisons.
 
 ## Multiple Testing Corrections
 
@@ -59,6 +73,7 @@ When testing multiple predictors, the chance of at least one false positive incr
 - **Bonferroni** — Multiplies each p-value by the number of tests. Most conservative.
 - **Holm** — A step-down version of Bonferroni. Less conservative, still controls the family-wise error rate.
 - **Benjamini-Hochberg** — Controls the false discovery rate (FDR). Least conservative, more power.
+- **Tukey HSD** — Specifically designed for pairwise comparisons between factor levels. Only applies to contrast-based tests (post hoc comparisons); non-contrast tests show "-" for corrected power.
 
 Corrections reduce power for individual tests. If you only care about the overall model test, you may not need a correction.
 

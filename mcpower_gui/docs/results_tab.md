@@ -20,8 +20,8 @@ A **power curve** plots power (y-axis) against sample size (x-axis) for each tar
 
 Below the chart, a table presents the numerical results:
 
-- **Find Power:** Each row shows a predictor and its estimated power percentage. If correction is applied, both raw and corrected power are shown.
-- **Find Sample Size:** Each row shows a predictor and the minimum sample size needed to reach the target power. If a test never reached the target within the search range, this is indicated.
+- **Find Power:** Each row shows a predictor and its estimated power percentage. If correction is applied, both raw and corrected power are shown. Post hoc comparisons appear as `"factor[a] vs factor[b]"` labels — when data is uploaded, `a` and `b` are the original level names (e.g. `origin[Europe] vs origin[Japan]`); without data, they are integer indices. With Tukey HSD correction, non-contrast tests (e.g., "overall", main effects) show "-" for corrected power since Tukey only applies to pairwise comparisons.
+- **Find Sample Size:** Each row shows a predictor and the minimum sample size needed to reach the target power. If a test never reached the target within the search range, this is indicated. Post hoc comparison results use the same `"factor[a] vs factor[b]"` label format.
 
 ## Scenario view
 

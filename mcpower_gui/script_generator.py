@@ -49,13 +49,35 @@ def generate_script(
         lines.append("")
 
     # Model creation
+    model_type = state_snapshot.get("model_type", "linear_regression")
+    if model_type == "anova":
+        lines.append("# Model type: ANOVA (all predictors are factors)")
     formula = state_snapshot.get("formula", "")
     lines.append(f'model = MCPower("{formula}")')
 
     # Upload data
     if data_file_path:
         preserve = state_snapshot.get("preserve_correlation", "partial")
-        lines.append(f'model.upload_data(data, preserve_correlation="{preserve}")')
+        # Build data_types with non-default reference levels
+        factor_refs = state_snapshot.get("factor_reference_levels", {})
+        factor_labels = state_snapshot.get("factor_level_labels", {})
+        data_types = {}
+        for factor_name, ref_level in factor_refs.items():
+            level_labels_list = factor_labels.get(factor_name, [])
+            if level_labels_list and ref_level != level_labels_list[0]:
+                data_types[factor_name] = ("factor", ref_level)
+
+        if data_types:
+            lines.append(f"data_types = {data_types!r}")
+            lines.append(
+                f'model.upload_data(data, preserve_correlation="{preserve}",'
+                f" preserve_factor_level_names=True, data_types=data_types)"
+            )
+        else:
+            lines.append(
+                f'model.upload_data(data, preserve_correlation="{preserve}",'
+                f" preserve_factor_level_names=True)"
+            )
 
     # Variable types
     vtypes = state_snapshot.get("variable_types", {})

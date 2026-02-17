@@ -77,10 +77,21 @@ def build_correlations_string(correlations: dict[str, float]) -> str:
 class ModelState:
     """Snapshot of all user-configurable model parameters."""
 
+    # Model type: "linear_regression" or "anova"
+    model_type: str = "linear_regression"
+
     # Formula
     formula: str = ""
     dep_var: str = ""
     predictors: list[str] = field(default_factory=list)
+
+    # ANOVA-specific fields (raw user input for UI restoration)
+    anova_factors: list[dict] = field(default_factory=list)
+    anova_interactions: list[str] = field(default_factory=list)
+
+    # Named factor level metadata (populated from data upload)
+    factor_reference_levels: dict[str, str] = field(default_factory=dict)
+    factor_level_labels: dict[str, list[str]] = field(default_factory=dict)
 
     # Effect sizes: predictor name -> float (may include expanded factor dummies)
     effects: dict[str, float] = field(default_factory=dict)
@@ -120,11 +131,18 @@ class ModelState:
     def snapshot(self) -> dict:
         """Return a JSON-serializable snapshot (no DataFrame)."""
         return {
+            "model_type": self.model_type,
             "formula": self.formula,
             "dep_var": self.dep_var,
             "predictors": list(self.predictors),
             "effects": dict(self.effects),
             "variable_types": {k: dict(v) for k, v in self.variable_types.items()},
+            "anova_factors": [dict(f) for f in self.anova_factors],
+            "anova_interactions": list(self.anova_interactions),
+            "factor_reference_levels": dict(self.factor_reference_levels),
+            "factor_level_labels": {
+                k: list(v) for k, v in self.factor_level_labels.items()
+            },
             "n_simulations": self.n_simulations,
             "n_simulations_mixed_model": self.n_simulations_mixed_model,
             "alpha": self.alpha,

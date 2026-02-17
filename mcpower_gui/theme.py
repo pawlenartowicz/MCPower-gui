@@ -15,6 +15,7 @@ class ThemeMode(Enum):
 
 
 _SETTINGS_KEY = "theme"
+_FONT_SIZE_KEY = "font_size"
 
 # Current resolved dark/light state (set by apply_theme)
 _is_dark: bool = False
@@ -88,11 +89,21 @@ def _build_dark_palette() -> QPalette:
 
 
 def _build_dark_pink_palette() -> QPalette:
-    """Dark palette with subtle pink accents (highlight, link, bright text)."""
+    """Dark palette with pink accents throughout."""
     p = _build_dark_palette()
+    # Core pink accents
     p.setColor(QPalette.ColorRole.Highlight, QColor("#e91e63"))
+    p.setColor(QPalette.ColorRole.HighlightedText, QColor(255, 255, 255))
     p.setColor(QPalette.ColorRole.Link, QColor("#f48fb1"))
     p.setColor(QPalette.ColorRole.BrightText, QColor("#ff80ab"))
+    # Subtle pink tint on surfaces
+    p.setColor(QPalette.ColorRole.Window, QColor(58, 48, 53))
+    p.setColor(QPalette.ColorRole.Base, QColor(40, 32, 36))
+    p.setColor(QPalette.ColorRole.AlternateBase, QColor(50, 40, 45))
+    p.setColor(QPalette.ColorRole.Button, QColor(58, 48, 53))
+    # Pink-tinted mid / placeholder
+    p.setColor(QPalette.ColorRole.Mid, QColor(100, 70, 85))
+    p.setColor(QPalette.ColorRole.PlaceholderText, QColor(170, 120, 145))
     return p
 
 
@@ -151,12 +162,62 @@ def current_mode() -> ThemeMode:
     return _current_mode
 
 
+def saved_font_size() -> int:
+    """Read persisted font size from QSettings. Returns 0 if unset."""
+    settings = QSettings("MCPower", "MCPower")
+    return int(settings.value(_FONT_SIZE_KEY, 0))
+
+
+def save_font_size(size: int) -> None:
+    """Persist font size to QSettings."""
+    settings = QSettings("MCPower", "MCPower")
+    settings.setValue(_FONT_SIZE_KEY, size)
+
+
+def _get_default_font_size() -> int:
+    """Return system default font size + 1 (fallback 11)."""
+    app = QApplication.instance()
+    if not isinstance(app, QApplication):
+        return 11
+    pt = app.font().pointSize()
+    return (pt + 1) if pt > 0 else 11
+
+
+def apply_font_size(size: int | None = None) -> None:
+    """Apply font size to QApplication.
+
+    If *size* is 0 or None, compute system default + 1, persist it, and apply.
+    """
+    app = QApplication.instance()
+    if not isinstance(app, QApplication):
+        return
+    if not size:
+        size = saved_font_size()
+    if not size:
+        size = _get_default_font_size()
+        save_font_size(size)
+    font = app.font()
+    font.setPointSize(size)
+    app.setFont(font)
+
+
 def current_colors() -> dict[str, str]:
     """Return semantic color hex strings for the current theme.
 
     For use by widgets that can't rely on QPalette (pyqtgraph, inline styles).
     """
-    if _is_dark:
+    if _current_mode == ThemeMode.DARK_PINK:
+        return {
+            "plot_bg": "#282024",
+            "plot_fg": "#dcdcdc",
+            "muted": "#aa7891",
+            "script_bg": "#322830",
+            "script_fg": "#dcdcdc",
+            "border": "#6a2a4a",
+            "success": "#e91e63",
+            "error": "#ef5350",
+        }
+    elif _is_dark:
         return {
             "plot_bg": "#232323",
             "plot_fg": "#dcdcdc",

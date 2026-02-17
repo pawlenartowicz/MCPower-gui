@@ -49,6 +49,7 @@ class ResultsTab(QWidget):
         target_power: float,
         script: str,
         analysis_params: dict | None = None,
+        model_type: str = "linear_regression",
     ) -> ResultPanel:
         """Create a ResultPanel subtab and select it.
 
@@ -63,8 +64,9 @@ class ResultsTab(QWidget):
             parent=self,
         )
         now = datetime.now()
-        prefix = "FP" if mode == "power" else "FSS"
-        tab_name = f"{prefix} | {now.strftime('%H:%M')}"
+        type_prefix = "A" if model_type == "anova" else "lm"
+        mode_prefix = "FP" if mode == "power" else "FSS"
+        tab_name = f"{type_prefix}_{mode_prefix} | {now.strftime('%H:%M')}"
 
         idx = self._tab_widget.addTab(panel, tab_name)
         self._tab_times[id(panel)] = now

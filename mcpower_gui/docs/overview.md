@@ -15,7 +15,7 @@ Traditional power formulas work for simple designs but break down with interacti
 
 ## App workflow
 
-1. **Model tab** — Define your study design: enter a formula, set variable types, specify effect sizes, and optionally upload empirical data with correlations.
+1. **Model tab** — Define your study design: enter a formula, set variable types, specify effect sizes, and optionally upload empirical data (including string columns) with correlations. Factor levels from uploaded data use original values.
 2. **Analysis tab** — Choose analysis mode (Find Power or Find Sample Size), set target power, enable scenarios, and select multiple testing corrections.
 3. **Results tab** — View power tables, bar charts, power curves, scenario comparisons, and a replication script you can run independently.
 

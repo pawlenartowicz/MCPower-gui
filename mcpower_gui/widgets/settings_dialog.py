@@ -1,4 +1,4 @@
-"""Settings dialog — General + Realistic/Doomer scenario configuration."""
+"""Settings dialog — sidebar navigation with General + Scenarios pages."""
 
 from __future__ import annotations
 
@@ -11,12 +11,26 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QFormLayout,
     QGroupBox,
+    QHBoxLayout,
+    QListWidget,
+    QScrollArea,
     QSpinBox,
+    QStackedWidget,
     QVBoxLayout,
+    QWidget,
 )
 
 from mcpower_gui.state import SCENARIO_DEFAULTS, ModelState
-from mcpower_gui.theme import ThemeMode, apply_theme, save_theme_mode, saved_theme_mode
+from mcpower_gui.theme import (
+    ThemeMode,
+    apply_font_size,
+    apply_theme,
+    save_font_size,
+    save_theme_mode,
+    saved_font_size,
+    saved_theme_mode,
+)
+from mcpower_gui.widgets.info_button import attach_info_button
 
 
 class SettingsDialog(QDialog):
@@ -27,12 +41,56 @@ class SettingsDialog(QDialog):
     def __init__(self, state: ModelState, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Settings")
+        self.resize(700, 500)
         self._state = state
         self._original_theme = saved_theme_mode()
+        self._original_font_size = saved_font_size()
 
         root = QVBoxLayout(self)
 
-        # ── General ──────────────────────────────────────────
+        # ── Sidebar + stacked pages ─────────────────────────
+        body = QHBoxLayout()
+
+        self._sidebar = QListWidget()
+        self._sidebar.setFixedWidth(140)
+        self._sidebar.addItem("General")
+        self._sidebar.addItem("Scenarios")
+        body.addWidget(self._sidebar)
+
+        self._stack = QStackedWidget()
+        body.addWidget(self._stack, stretch=1)
+
+        root.addLayout(body, stretch=1)
+
+        # ── Page 0: General ─────────────────────────────────
+        general_page = self._build_general_page(state)
+        self._stack.addWidget(general_page)
+
+        # ── Page 1: Scenarios ───────────────────────────────
+        scenarios_page = self._build_scenarios_page(state)
+        self._stack.addWidget(scenarios_page)
+
+        # ── Buttons ─────────────────────────────────────────
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self._apply_and_accept)
+        buttons.rejected.connect(self.reject)
+        root.addWidget(buttons)
+
+        self._sidebar.currentRowChanged.connect(self._stack.setCurrentIndex)
+        self._sidebar.setCurrentRow(0)
+
+    # ── Page builders ────────────────────────────────────────
+
+    def _build_general_page(self, state: ModelState) -> QScrollArea:
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+
+        page = QWidget()
+        page_layout = QVBoxLayout(page)
+
         general = QGroupBox("General")
         gf = QFormLayout(general)
 
@@ -51,6 +109,13 @@ class SettingsDialog(QDialog):
         self._theme.setCurrentIndex(_theme_map.get(current, 0))
         self._theme.currentIndexChanged.connect(self._on_theme_changed)
         gf.addRow("Theme:", self._theme)
+
+        self._font_size = QSpinBox()
+        self._font_size.setRange(8, 20)
+        cur_size = saved_font_size()
+        self._font_size.setValue(cur_size if cur_size else 11)
+        self._font_size.valueChanged.connect(self._on_font_size_changed)
+        gf.addRow("Font size:", self._font_size)
 
         self._n_simulations = QSpinBox()
         self._n_simulations.setRange(100, 100_000)
@@ -139,9 +204,21 @@ class SettingsDialog(QDialog):
             )
         )
 
-        root.addWidget(general)
+        page_layout.addWidget(general)
+        attach_info_button(general, "settings.md", "General", "Settings")
+        page_layout.addStretch()
 
-        # ── Scenario groups ──────────────────────────────────
+        scroll.setWidget(page)
+        return scroll
+
+    def _build_scenarios_page(self, state: ModelState) -> QScrollArea:
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+
+        page = QWidget()
+        page_layout = QVBoxLayout(page)
+
         self._scenario_spins: dict[str, dict[str, QDoubleSpinBox]] = {}
         for scenario_name, defaults in SCENARIO_DEFAULTS.items():
             title = f"Scenario: {scenario_name.capitalize()}"
@@ -150,15 +227,12 @@ class SettingsDialog(QDialog):
             cfg = state.scenario_configs.get(scenario_name, {})
             group, spins = self._build_scenario_group(title, cfg, defaults)
             self._scenario_spins[scenario_name] = spins
-            root.addWidget(group)
+            page_layout.addWidget(group)
 
-        # ── Buttons ──────────────────────────────────────────
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.accepted.connect(self._apply_and_accept)
-        buttons.rejected.connect(self.reject)
-        root.addWidget(buttons)
+        page_layout.addStretch()
+
+        scroll.setWidget(page)
+        return scroll
 
     # ── Helpers ──────────────────────────────────────────────
 
@@ -184,6 +258,7 @@ class SettingsDialog(QDialog):
             spin.setValue(cfg.get(key, defaults[key]))
             form.addRow(label, spin)
             spins[key] = spin
+        attach_info_button(group, "settings.md", "Scenario Parameters", "Settings")
         return group, spins
 
     def _on_theme_changed(self):
@@ -191,9 +266,14 @@ class SettingsDialog(QDialog):
         mode = ThemeMode(self._theme.currentData())
         apply_theme(mode)
 
+    def _on_font_size_changed(self, value: int):
+        """Live-preview the selected font size."""
+        apply_font_size(value)
+
     def reject(self):
-        """Revert theme to original on Cancel."""
+        """Revert theme and font size to original on Cancel."""
         apply_theme(self._original_theme)
+        apply_font_size(self._original_font_size)
         super().reject()
 
     def _apply_and_accept(self):
@@ -214,4 +294,6 @@ class SettingsDialog(QDialog):
         mode = ThemeMode(self._theme.currentData())
         save_theme_mode(mode)
         apply_theme(mode)
+        save_font_size(self._font_size.value())
+        apply_font_size(self._font_size.value())
         self.accept()

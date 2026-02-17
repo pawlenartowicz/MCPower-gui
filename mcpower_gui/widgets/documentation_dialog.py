@@ -29,7 +29,7 @@ def _load_doc_page(filename: str) -> str:
 
 
 class DocumentationDialog(QDialog):
-    def __init__(self, parent: QWidget | None = None):
+    def __init__(self, parent: QWidget | None = None, initial_page: str | None = None):
         super().__init__(parent)
         self.setWindowTitle("Documentation")
         self.resize(780, 560)
@@ -55,7 +55,13 @@ class DocumentationDialog(QDialog):
         root.addWidget(buttons)
 
         self._sidebar.currentRowChanged.connect(self._on_page_changed)
-        self._sidebar.setCurrentRow(0)
+        start_row = 0
+        if initial_page:
+            for i, (name, _) in enumerate(_PAGES):
+                if name == initial_page:
+                    start_row = i
+                    break
+        self._sidebar.setCurrentRow(start_row)
 
     def _on_page_changed(self, row: int):
         if 0 <= row < len(_PAGES):

@@ -21,11 +21,11 @@ from mcpower import __version__ as _mcpower_version
 
 from mcpower_gui.state import SCENARIO_ORDER
 from mcpower_gui.theme import current_colors
-
-_CITATION = "Lenartowicz, P. (2025). MCPower: Monte Carlo Power Analysis for Statistical Models. Zenodo. DOI: 10.5281/zenodo.16502734"
 from mcpower_gui.widgets.power_bar_chart import PowerBarChart
 from mcpower_gui.widgets.power_curve_plot import PowerCurvePlot
 from mcpower_gui.widgets.results_table import ResultsTable
+
+_CITATION = "Lenartowicz, P. (2025). MCPower: Monte Carlo Power Analysis for Statistical Models. Zenodo. DOI: 10.5281/zenodo.16502734"
 
 _SCENARIO_TITLES = {
     "optimistic": "Optimistic",

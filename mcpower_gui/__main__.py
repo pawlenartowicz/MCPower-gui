@@ -72,9 +72,10 @@ def _smoke_test() -> None:
     if app is None:
         errors.append("QApplication creation failed")
 
-    from mcpower_gui.theme import apply_theme
+    from mcpower_gui.theme import apply_font_size, apply_theme
 
     apply_theme()
+    apply_font_size()
 
     # 3. MainWindow creation
     try:
@@ -140,9 +141,10 @@ def main():
     app.setApplicationVersion(__version__)
     app.setDesktopFileName("pl.freestylerscientist.mcpower")
 
-    from mcpower_gui.theme import apply_theme
+    from mcpower_gui.theme import apply_font_size, apply_theme
 
     apply_theme()
+    apply_font_size()
 
     icon_path = Path(__file__).parent / "media" / "icon.png"
     if icon_path.exists():

@@ -2,6 +2,28 @@
 
 All notable changes to MCPower GUI are documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- **ANOVA mode** — New input mode toggle (Linear Formula / ANOVA) in the Model tab. ANOVA mode provides a dedicated factor editor with named levels, proportions, reference level selector, and interaction toggles. Tukey HSD correction is available exclusively in ANOVA mode
+- **Contextual help (info buttons)** — Small (i) buttons next to every QGroupBox title across Model, Analysis, and Settings. Clicking opens a popup with the relevant documentation section; a link at the bottom opens the full documentation dialog on the correct page (`info_button.py`)
+- **Named factor levels** — When data is uploaded, factor dummies use original values from the data (e.g. `cyl[6]`, `cyl[8]` instead of `cyl[2]`, `cyl[3]`)
+- **String column support** — Columns with non-numeric values (e.g. "control", "drug_a") are auto-detected as factors when they have 2-20 unique values
+- **Reference level selector** — In ANOVA mode, a dropdown lets you choose which factor level is the reference category; default is first sorted value
+- **Named post hoc comparisons** — Pairwise comparisons display original level names (e.g. `origin[Europe] vs origin[Japan]`)
+- **Configurable font size** — New "Font size" setting (8–20 pt) in the Settings dialog with live preview; persisted across sessions
+- **Save plots as JPG** — New "Save Plots as JPG" button in the result panel exports bar charts and power curves via PyQtGraph's ImageExporter
+- Replication scripts include `preserve_factor_level_names=True` parameter
+- New test: `test_info_button.py`
+
+### Changed
+
+- Documentation dialog now supports deep-linking to a specific page via `initial_page` parameter (used by info button popups)
+- History entries display `[ANOVA]` tag when the analysis used ANOVA mode
+- Result subtab names use model-type prefix (`A_FP`, `A_FSS` for ANOVA; `lm_FP`, `lm_FSS` for linear)
+- In-app documentation pages updated (`model_tab.md`, `analysis_tab.md`, `results_tab.md`, `key_concepts.md`, `overview.md`)
+
 ## [0.1.1] — 2026-02-16
 
 ### Added
