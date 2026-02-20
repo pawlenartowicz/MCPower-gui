@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mcpower-gui"
-version = "0.2.1"
+version = "0.2.2"
 description = "PySide6 desktop GUI for MCPower Monte Carlo power analysis"
 license = {text = "GPL-3.0-or-later"}
 authors = [
