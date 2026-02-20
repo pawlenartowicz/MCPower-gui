@@ -10,8 +10,8 @@ class TestExtractDocSection:
         assert "R-style formula" in text
 
     def test_extracts_section_with_subsections(self):
-        text = extract_doc_section("model_tab.md", "Data Upload (optional)")
-        assert "## Data Upload (optional)" in text
+        text = extract_doc_section("model_tab.md", "Use Your Data (optional)")
+        assert "## Use Your Data (optional)" in text
         assert "### Correlation mode" in text
 
     def test_extracts_last_section(self):

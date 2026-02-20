@@ -43,7 +43,7 @@ class ResultsTable(QWidget):
             self._table.setColumnCount(5)
             self._table.setHorizontalHeaderLabels(
                 [
-                    "Effect",
+                    "Tested Variable",
                     "Power (%)",
                     "Achieved",
                     "Corrected (%)",
@@ -52,7 +52,7 @@ class ResultsTable(QWidget):
             )
         else:
             self._table.setColumnCount(3)
-            self._table.setHorizontalHeaderLabels(["Effect", "Power (%)", "Achieved"])
+            self._table.setHorizontalHeaderLabels(["Tested Variable", "Power (%)", "Achieved"])
 
         self._table.setRowCount(len(powers))
 
@@ -96,12 +96,12 @@ class ResultsTable(QWidget):
         if has_corrected:
             self._table.setColumnCount(4)
             self._table.setHorizontalHeaderLabels(
-                ["Effect", "Required N", "Target Power (%)", "Corrected N"]
+                ["Tested Variable", "Required N", "Target Power (%)", "Corrected N"]
             )
         else:
             self._table.setColumnCount(3)
             self._table.setHorizontalHeaderLabels(
-                ["Effect", "Required N", "Target Power (%)"]
+                ["Tested Variable", "Required N", "Target Power (%)"]
             )
 
         self._table.setRowCount(len(first_achieved))
@@ -133,7 +133,7 @@ class ResultsTable(QWidget):
         self._table.clear()
         self._table.setColumnCount(4)
         self._table.setHorizontalHeaderLabels(
-            ["Effect", "Optimistic (%)", "Realistic (%)", "Doomer (%)"]
+            ["Tested Variable", "Optimistic (%)", "Realistic (%)", "Doomer (%)"]
         )
 
         # Get effect names from first available scenario
@@ -170,7 +170,7 @@ class ResultsTable(QWidget):
         self._table.clear()
         self._table.setColumnCount(4)
         self._table.setHorizontalHeaderLabels(
-            ["Effect", "Optimistic N", "Realistic N", "Doomer N"]
+            ["Tested Variable", "Optimistic N", "Realistic N", "Doomer N"]
         )
         not_achieved_text = f"> {max_n}" if max_n is not None else "Not achieved"
 

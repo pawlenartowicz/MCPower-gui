@@ -8,6 +8,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from mcpower_gui.widgets.spin_boxes import DoubleSpinBox
+
 from mcpower_gui.theme import current_colors
 
 
@@ -76,7 +78,7 @@ class CorrelationEditor(QWidget):
             # Lower triangle cells: col < row
             for col_idx in range(row_idx):
                 key = _corr_key(variables[row_idx], variables[col_idx])
-                spin = QDoubleSpinBox()
+                spin = DoubleSpinBox()
                 spin.setRange(-0.99, 0.99)
                 spin.setSingleStep(0.05)
                 spin.setDecimals(2)

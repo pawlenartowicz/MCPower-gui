@@ -184,11 +184,19 @@ class ResultPanel(QWidget):
         title: str | None = None,
     ):
         """Create and add a bar chart (power) or curve plot (sample_size)."""
+        import math
+
         if mode == "power":
             chart = PowerBarChart()
             if title:
                 chart._plot.setTitle(title)
-            powers = results.get("individual_powers", {})
+            # Use corrected powers when correction was applied; fall back to uncorrected.
+            # individual_powers_corrected is {} (falsy) when no correction was used.
+            powers_corrected = results.get("individual_powers_corrected")
+            if powers_corrected:
+                powers = {k: v for k, v in powers_corrected.items() if not math.isnan(v)}
+            else:
+                powers = results.get("individual_powers", {})
             if powers:
                 chart.update_chart(powers, target_power)
             layout.addWidget(chart, stretch=2)
@@ -198,8 +206,25 @@ class ResultPanel(QWidget):
             if title:
                 curve._plot.setTitle(title)
             sample_sizes = results.get("sample_sizes_tested", [])
-            powers_by_test = results.get("powers_by_test", {})
-            first_achieved = results.get("first_achieved", {})
+            # Use corrected series when correction was applied; None means no correction.
+            powers_by_test_corrected = results.get("powers_by_test_corrected")
+            first_achieved_corrected = results.get("first_achieved_corrected")
+            if powers_by_test_corrected is not None:
+                # Filter out tests where ALL corrected values are NaN (e.g. non-contrast
+                # tests when Tukey HSD is selected).
+                powers_by_test = {
+                    k: v
+                    for k, v in powers_by_test_corrected.items()
+                    if not all(math.isnan(p) for p in v)
+                }
+                first_achieved = {
+                    k: v
+                    for k, v in (first_achieved_corrected or {}).items()
+                    if k in powers_by_test
+                }
+            else:
+                powers_by_test = results.get("powers_by_test", {})
+                first_achieved = results.get("first_achieved", {})
             if sample_sizes:
                 curve.update_plot(
                     sample_sizes, powers_by_test, first_achieved, target_power
@@ -312,7 +337,7 @@ class ResultPanel(QWidget):
             meta_lines = buf.getvalue().splitlines()
 
             lines = meta_lines + self._results_table.to_csv_lines()
-            with open(path, "w", encoding="utf-8") as f:
+            with open(path, "w", encoding="utf-8-sig") as f:
                 f.write("\n".join(lines) + "\n")
         except Exception as exc:
             QMessageBox.warning(self, "Save Error", str(exc))

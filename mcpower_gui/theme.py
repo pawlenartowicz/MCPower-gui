@@ -175,12 +175,8 @@ def save_font_size(size: int) -> None:
 
 
 def _get_default_font_size() -> int:
-    """Return system default font size + 1 (fallback 11)."""
-    app = QApplication.instance()
-    if not isinstance(app, QApplication):
-        return 11
-    pt = app.font().pointSize()
-    return (pt + 1) if pt > 0 else 11
+    """Return the default font size used on first launch."""
+    return 10
 
 
 def apply_font_size(size: int | None = None) -> None:

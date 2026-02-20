@@ -11,15 +11,19 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QScrollArea,
     QSpinBox,
     QVBoxLayout,
     QWidget,
 )
 
+from mcpower_gui.widgets.spin_boxes import DoubleSpinBox, SpinBox
+
 from mcpower_gui.state import ModelState
 from mcpower_gui.widgets.info_button import attach_info_button
 from mcpower_gui.widgets.post_hoc_selector import PostHocSelector
 from mcpower_gui.widgets.target_test_selector import TargetTestSelector
+from mcpower_gui.widgets.tutorial_guide import TutorialGuide
 
 
 class AnalysisTab(QWidget):
@@ -36,13 +40,26 @@ class AnalysisTab(QWidget):
         self._state = state
         self._model_ready = False
 
-        root = QVBoxLayout(self)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+
+        # ── Tutorial Guide (above scroll — always visible) ──
+        self._tutorial = TutorialGuide(mode="analysis")
+        outer.addWidget(self._tutorial)
+        self._tutorial.update_state(model_ready=False)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        content = QWidget()
+        root = QVBoxLayout(content)
 
         # ── Common Analysis Settings ─────────────────────────
         common_group = QGroupBox("Common Analysis Settings")
         cf = QFormLayout(common_group)
 
-        self._target_power = QDoubleSpinBox()
+        self._target_power = DoubleSpinBox()
         self._target_power.setRange(1.0, 99.99)
         self._target_power.setValue(state.target_power)
         self._target_power.setSingleStep(5.0)
@@ -89,7 +106,7 @@ class AnalysisTab(QWidget):
         power_group = QGroupBox("Find Power")
         pf = QFormLayout(power_group)
 
-        self._power_sample_size = QSpinBox()
+        self._power_sample_size = SpinBox()
         self._power_sample_size.setRange(20, 100_000)
         self._power_sample_size.setValue(100)
         self._power_sample_size.setSingleStep(10)
@@ -106,19 +123,19 @@ class AnalysisTab(QWidget):
         ss_group = QGroupBox("Find Sample Size")
         sf = QFormLayout(ss_group)
 
-        self._ss_from = QSpinBox()
+        self._ss_from = SpinBox()
         self._ss_from.setRange(20, 100_000)
         self._ss_from.setValue(30)
         self._ss_from.setSingleStep(10)
         sf.addRow("From:", self._ss_from)
 
-        self._ss_to = QSpinBox()
+        self._ss_to = SpinBox()
         self._ss_to.setRange(20, 100_000)
         self._ss_to.setValue(200)
         self._ss_to.setSingleStep(10)
         sf.addRow("To:", self._ss_to)
 
-        self._ss_by = QSpinBox()
+        self._ss_by = SpinBox()
         self._ss_by.setRange(1, 1000)
         self._ss_by.setValue(10)
         sf.addRow("Step:", self._ss_by)
@@ -133,6 +150,8 @@ class AnalysisTab(QWidget):
         )
 
         root.addStretch()
+        scroll.setWidget(content)
+        outer.addWidget(scroll)
 
         # Connections
         self._btn_power.clicked.connect(self._on_run_power)
@@ -198,6 +217,25 @@ class AnalysisTab(QWidget):
         """Disable/enable buttons while analysis is in progress."""
         self._btn_power.setEnabled(not running and self._model_ready)
         self._btn_ss.setEnabled(not running and self._model_ready)
+
+    def reopen_tutorial(self):
+        """Re-show the tutorial guide after dismissal."""
+        self._tutorial.reopen()
+
+    def update_tutorial(
+        self,
+        formula: str = "",
+        predictors: list[str] | None = None,
+        variable_types: dict[str, dict] | None = None,
+        model_ready: bool = False,
+    ):
+        """Update the analysis tab tutorial guide with current model info."""
+        self._tutorial.update_state(
+            formula=formula,
+            predictors=predictors,
+            variable_types=variable_types,
+            model_ready=model_ready,
+        )
 
     # ── Internal ─────────────────────────────────────────────
 

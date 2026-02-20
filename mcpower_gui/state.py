@@ -5,33 +5,51 @@ No Qt dependencies — keeps state testable and decoupled from the UI.
 
 from __future__ import annotations
 
+import copy
 import os
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    import pandas as pd
 
 SCENARIO_ORDER = ["optimistic", "realistic", "doomer"]
 
-SCENARIO_DEFAULTS: dict[str, dict[str, float]] = {
+SCENARIO_DEFAULTS: dict[str, dict[str, float | str | int]] = {
     "optimistic": {
         "heterogeneity": 0.0,
         "heteroskedasticity": 0.0,
         "correlation_noise_sd": 0.0,
         "distribution_change_prob": 0.0,
+        # LME-specific (only consumed by mixed models)
+        "icc_noise_sd": 0.0,
+        "random_effect_dist": "normal",
+        "random_effect_df": 5,
+        "residual_dist": "normal",
+        "residual_change_prob": 0.0,
+        "residual_df": 10,
     },
     "realistic": {
         "heterogeneity": 0.2,
         "heteroskedasticity": 0.1,
         "correlation_noise_sd": 0.2,
         "distribution_change_prob": 0.3,
+        # LME-specific
+        "icc_noise_sd": 0.15,
+        "random_effect_dist": "heavy_tailed",
+        "random_effect_df": 5,
+        "residual_dist": "heavy_tailed",
+        "residual_change_prob": 0.3,
+        "residual_df": 10,
     },
     "doomer": {
         "heterogeneity": 0.4,
         "heteroskedasticity": 0.2,
         "correlation_noise_sd": 0.4,
         "distribution_change_prob": 0.6,
+        # LME-specific
+        "icc_noise_sd": 0.30,
+        "random_effect_dist": "heavy_tailed",
+        "random_effect_df": 3,
+        "residual_dist": "heavy_tailed",
+        "residual_change_prob": 0.8,
+        "residual_df": 5,
     },
 }
 
@@ -102,16 +120,19 @@ class ModelState:
     variable_types: dict[str, dict] = field(default_factory=dict)
 
     # Uploaded empirical data (None = no data uploaded)
-    uploaded_data: pd.DataFrame | None = None
+    uploaded_data: dict[str, list] | None = None
     data_file_path: str | None = None
 
     # Correlation settings
     preserve_correlation: str = "partial"  # "strict" | "partial" | "no"
     correlations: dict[str, float] = field(default_factory=dict)  # key "x1,x2" -> float
 
+    # Cluster configurations for mixed models (random effects)
+    cluster_configs: list[dict] = field(default_factory=list)
+
     # Analysis settings
     n_simulations: int = 1600
-    n_simulations_mixed_model: int = 400
+    n_simulations_mixed_model: int = 800
     alpha: float = 0.05
     target_power: float = 80.0
 
@@ -143,6 +164,7 @@ class ModelState:
             "factor_level_labels": {
                 k: list(v) for k, v in self.factor_level_labels.items()
             },
+            "uploaded_columns": list(self.uploaded_data.keys()) if self.uploaded_data else [],
             "n_simulations": self.n_simulations,
             "n_simulations_mixed_model": self.n_simulations_mixed_model,
             "alpha": self.alpha,
@@ -153,5 +175,6 @@ class ModelState:
             "n_cores": self.n_cores,
             "preserve_correlation": self.preserve_correlation,
             "correlations": dict(self.correlations),
+            "cluster_configs": copy.deepcopy(self.cluster_configs),
             "scenario_configs": {k: dict(v) for k, v in self.scenario_configs.items()},
         }

@@ -44,7 +44,6 @@ hiddenimports = [
     "mcpower.utils.parsers",
     # Stats (imported inside functions)
     "scipy.stats",
-    "statsmodels.regression.mixed_linear_model",
     # Optional parallel backend
     "joblib",
     # multiprocessing freeze support
@@ -75,7 +74,21 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=["tkinter"],
+    excludes=[
+        "tkinter",
+        # matplotlib chain — installed as MCPower dep but not used by GUI
+        "matplotlib", "mpl_toolkits", "PIL", "Pillow",
+        "kiwisolver", "contourpy", "cycler", "fonttools", "pyparsing",
+        # IPython/Jupyter chain — pulled via pyqtgraph optional console
+        "IPython", "jedi", "parso", "pygments",
+        "prompt_toolkit", "traitlets", "tornado", "zmq",
+        "ipykernel", "jupyter_client", "jupyter_core", "debugpy", "pexpect",
+        # statsmodels — optional MCPower[lme] dep, not needed in GUI
+        "statsmodels",
+        # Test/build tools
+        "_pytest", "pytest", "pluggy", "coverage",
+        "setuptools", "pkg_resources",
+    ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,

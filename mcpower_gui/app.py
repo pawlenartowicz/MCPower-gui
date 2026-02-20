@@ -34,7 +34,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("MCPower — Monte Carlo Power Analysis")
-        self.resize(900, 700)
+        self.resize(1100, 800)
 
         self._state = ModelState()
         self._worker: AnalysisWorker | None = None
@@ -91,7 +91,7 @@ class MainWindow(QMainWindow):
         self._analysis_tab = AnalysisTab(self._state)
         self._tabs.addTab(self._analysis_tab, "Analysis")
 
-        self._results_tab = ResultsTab()
+        self._results_tab = ResultsTab(history_manager=self._history)
         self._tabs.addTab(self._results_tab, "Results")
 
         # Status bar
@@ -105,6 +105,7 @@ class MainWindow(QMainWindow):
         # Connections
         self._progress_dialog.abandon_requested.connect(self._abandon_analysis)
         self._model_tab.model_ready_changed.connect(self._analysis_tab.set_model_ready)
+        self._model_tab.model_ready_changed.connect(self._update_analysis_tutorial)
         self._model_tab.available_tests_changed.connect(
             self._analysis_tab.set_available_tests
         )
@@ -166,21 +167,24 @@ class MainWindow(QMainWindow):
 
         script = generate_script(state_snapshot, analysis_params, mode, data_file_path)
         model_type = state_snapshot.get("model_type", "linear_regression")
-        self._results_tab.add_result(
-            mode,
-            result,
-            target_power,
-            script,
-            analysis_params=analysis_params,
-            model_type=model_type,
-        )
-        self._history.save(
+        analysis_params_with_formula = dict(analysis_params)
+        analysis_params_with_formula["_formula"] = state_snapshot.get("formula", "")
+        record_id = self._history.save(
             mode,
             result,
             state_snapshot,
             analysis_params,
             data_file_path,
             script,
+        )
+        self._results_tab.add_result(
+            mode,
+            result,
+            target_power,
+            script,
+            analysis_params=analysis_params_with_formula,
+            model_type=model_type,
+            record_id=record_id,
         )
         self._tabs.setCurrentWidget(self._results_tab)
         self._status_bar.showMessage("Analysis complete", 5000)
@@ -203,8 +207,25 @@ class MainWindow(QMainWindow):
         self._status_bar.showMessage("Analysis cancelled", 5000)
         self._worker = None
 
+    def _update_analysis_tutorial(self, ready: bool):
+        """Forward model state to analysis tab tutorial."""
+        s = self._state
+        self._analysis_tab.update_tutorial(
+            formula=s.formula,
+            predictors=s.predictors,
+            variable_types=s.variable_types,
+            model_ready=ready,
+        )
+
     def _open_settings(self):
-        SettingsDialog(self._state, self).exec()
+        dlg = SettingsDialog(self._state, self)
+        dlg.reopen_tips_requested.connect(self._reopen_tips)
+        dlg.exec()
+
+    def _reopen_tips(self):
+        """Re-show tutorial guides on both tabs."""
+        self._model_tab.reopen_tutorial()
+        self._analysis_tab.reopen_tutorial()
 
     def _open_acknowledgments(self):
         AcknowledgmentsDialog(self).exec()
@@ -267,6 +288,7 @@ class MainWindow(QMainWindow):
             script,
             analysis_params=analysis_params,
             model_type=model_type,
+            record_id=record.get("id"),
         )
 
         # 5. Notify about data file

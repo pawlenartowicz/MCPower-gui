@@ -18,7 +18,7 @@ class PowerBarChart(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        self._plot = pg.PlotWidget(title="Power by Effect")
+        self._plot = pg.PlotWidget(title="Power by Tested Variable")
         colors = current_colors()
         self._plot.setBackground(colors["plot_bg"])
         self._plot.showGrid(x=True, y=False)

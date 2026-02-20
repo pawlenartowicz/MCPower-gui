@@ -24,8 +24,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install "MCPower>=0.4.0"
-        pip install "PySide6>=6.5.0" "pyqtgraph>=0.13.0"
+        pip install .
         pip install pyinstaller
 
     - name: Build binary

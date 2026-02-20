@@ -40,9 +40,9 @@ class TestGenerateScriptPowerMode:
         assert "sample_size=100" in script
         assert 'set_effects("x1=0.5, x2=0.3")' in script
 
-    def test_no_pandas_without_data(self):
+    def test_no_csv_without_data(self):
         script = generate_script(_minimal_state(), _minimal_params(), mode="power")
-        assert "import pandas" not in script
+        assert "import csv" not in script
         assert "upload_data" not in script
 
 
@@ -64,8 +64,9 @@ class TestGenerateScriptWithData:
             mode="power",
             data_file_path="/tmp/data.csv",
         )
-        assert "import pandas as pd" in script
-        assert 'pd.read_csv("/tmp/data.csv")' in script
+        assert "import csv" in script
+        assert "csv.DictReader" in script
+        assert "/tmp/data.csv" in script
         assert "upload_data(data" in script
 
 
@@ -85,3 +86,49 @@ class TestGenerateScriptCorrelations:
         script = generate_script(state, _minimal_params(), mode="power")
         assert "set_correlations(" in script
         assert "corr(x1, x2)=0.4" in script
+
+
+class TestGenerateScriptClusterConfigs:
+    def test_random_intercept(self):
+        state = _minimal_state(
+            formula="y ~ x1 + (1|school)",
+            cluster_configs=[
+                {"grouping_var": "school", "ICC": 0.2, "n_clusters": 20}
+            ],
+        )
+        script = generate_script(state, _minimal_params(), mode="power")
+        assert 'set_cluster("school"' in script
+        assert "ICC=0.2" in script
+        assert "n_clusters=20" in script
+
+    def test_random_slope(self):
+        state = _minimal_state(
+            formula="y ~ x1 + (1 + x1|school)",
+            cluster_configs=[
+                {"grouping_var": "school", "ICC": 0.2, "n_clusters": 20,
+                 "random_slopes": ["x1"], "slope_variance": 0.1,
+                 "slope_intercept_corr": 0.3}
+            ],
+        )
+        script = generate_script(state, _minimal_params(), mode="power")
+        assert 'set_cluster("school"' in script
+        assert "random_slopes=" in script
+        assert "slope_variance=0.1" in script
+        assert "slope_intercept_corr=0.3" in script
+
+    def test_nested_effects(self):
+        state = _minimal_state(
+            formula="y ~ x1 + (1|school/classroom)",
+            cluster_configs=[
+                {"grouping_var": "school", "ICC": 0.15, "n_clusters": 10},
+                {"grouping_var": "school:classroom", "ICC": 0.10, "n_per_parent": 3},
+            ],
+        )
+        script = generate_script(state, _minimal_params(), mode="power")
+        assert 'set_cluster("school"' in script
+        assert 'set_cluster("school:classroom"' in script
+        assert "n_per_parent=3" in script
+
+    def test_no_clusters_no_set_cluster(self):
+        script = generate_script(_minimal_state(), _minimal_params(), mode="power")
+        assert "set_cluster" not in script

@@ -2,7 +2,41 @@
 
 All notable changes to MCPower GUI are documented in this file.
 
-## [Unreleased]
+## [0.2.0] — 2026-02-20
+
+### Added
+
+- **Mixed model (LME) GUI support** — Formula input now parses random effects syntax (e.g. `(1|school)`, `(1 + treatment|school)`). Cluster Configuration section auto-appears with ICC, N clusters, slope variance, and slope-intercept correlation controls
+- **Tutorial guide** — Contextual next-step guide above Model and Analysis tabs. Declarative YAML-driven tip engine (`tips.yaml`, `tip_engine.py`) evaluates state conditions to show relevant tips. Dismissible per session; re-openable from Settings
+- **Tip engine** — Pure Python `TipEngine` class with AND-logic conditions supporting exact match, `!empty`, `!value`, `>=N` operators. `clusters_resolved` computed state key eliminates rule duplication
+- **Variable buttons** — After CSV upload, clickable variable name buttons appear for quick insertion into the formula or ANOVA factors. Uses new `FlowWidget` wrapping layout
+- **Wheel-scroll protection** — `WheelGuard` application-level event filter + `SpinBox`/`DoubleSpinBox` subclasses that ignore wheel input, preventing accidental value changes while scrolling
+- **Cluster value preservation** — `ClusterEditor` preserves user-edited ICC/cluster values when the formula changes and cards are rebuilt
+- New tests: `test_cluster_editor.py`, `test_tip_engine.py`, `test_tips_yaml.py`, `test_formula_input.py`, `test_mixed_model_integration.py`, `test_factor_autonaming.py`
+
+### Changed
+
+- **Pandas removed from GUI** — CSV reading now uses `csv.DictReader` + `numpy.corrcoef` instead of `pandas.read_csv`. Reduces binary size and startup time
+- **Unified title widget positioning** — `TitleWidgetPositioner` (configurable `x_offset`) replaces both `_InfoPositioner` and `_DotPositioner`, reducing code duplication
+- **AnovaFactorEditor public API** — Added `get_factor_names()`, `clear_factors()`, `notify_changed()`. External code no longer accesses private `_factor_rows`, `_clear_factor_rows()`, `_on_changed()`
+- **FormulaInput public API** — `EXAMPLES` (was `_EXAMPLES`) and `load_example()` (was `_load_example()`) are now public
+- **Tabs expose `reopen_tutorial()`** — Public method replaces direct access to private `_tutorial` attribute
+- **Model type signal deduplication** — `model_type_changed` only emits when the type actually changes, via `_emit_model_type()` guard
+- **Tips YAML deduplication** — Computed `clusters_resolved` state key eliminates 12 duplicate cluster/non-cluster rule pairs (642 → ~370 lines)
+- CSV export uses `utf-8-sig` encoding for Excel compatibility on Windows
+- New widget modules define `__all__` exports
+- Results tab names now include formula prefix and analysis mode
+- Updated in-app documentation (`model_tab.md`, `settings.md`, `overview.md`, `key_concepts.md`)
+- CI workflows updated for mixed model test dependencies
+
+### Fixed
+
+- `_format_level_label` now guards against `float('inf')` with `math.isfinite()` check
+- Module-level YAML loading in `tutorial_guide.py` wrapped in try/except — GUI starts even if `tips.yaml` is missing or malformed
+- NaN check in `_get_eligible_columns` uses `math.isnan` instead of fragile `v != v` pattern
+- `_close_others` reverse iteration documented for maintainability
+
+## [0.1.2] — 2026-02-17
 
 ### Added
 

@@ -11,9 +11,11 @@ Choose between two modes for defining your model:
 
 The input mode toggle switches the visible sections below: Linear Formula mode shows the Model Formula and Variable Types sections, while ANOVA mode shows the ANOVA Factors section.
 
-## Data Upload (optional)
+## Use Your Data (optional)
 
-Click **Upload CSV** to load an empirical dataset. When data is uploaded:
+By default, MCPower **generates synthetic data** from your specifications (formula, variable types, effect sizes). This works well for most power analyses.
+
+If you have an **empirical dataset**, you can upload it here. MCPower will then use your real data's structure instead of generating synthetic data. When data is uploaded:
 
 - Variable types are **auto-detected** from the data (2 unique values = binary, 3-6 = factor, 7+ = continuous).
 - **String columns** are supported — columns with non-numeric values (e.g. "control", "drug_a", "drug_b") are auto-detected as factors if they have 2-20 unique values.
@@ -22,7 +24,18 @@ Click **Upload CSV** to load an empirical dataset. When data is uploaded:
 - Correlations between variables are computed from the data.
 - The type dropdowns are locked to the detected types.
 
-You do not need to upload data — MCPower can generate synthetic data from your specifications alone.
+### CSV file requirements
+
+The GUI reads CSV files using Python's built-in `csv` module. Your file should:
+
+- **Use comma separators** (not semicolons or tabs).
+- **Include a header row** with column names.
+- **Have consistent data types per column** — don't mix numbers and text in the same column.
+- **Avoid special characters in column names** — stick to letters, numbers, and underscores.
+- **Have no missing values or empty cells** — fill or remove incomplete rows before uploading.
+- **Use UTF-8 encoding** (most editors default to this).
+
+Numeric columns are auto-converted to numbers. Non-numeric columns (e.g. "control", "drug_a") are kept as strings and treated as factors. Columns named "" or starting with "Unnamed" (common index columns from spreadsheet exports) are automatically skipped.
 
 ### Correlation mode
 
@@ -40,6 +53,22 @@ Enter an R-style formula describing your statistical model. Examples:
 - `y = x1 + x2 + x1:x2` — with interaction
 - `y = x1 * x2` — shorthand (expands to main effects + interaction)
 The formula is parsed live with a 400ms debounce. A green status line confirms successful parsing, showing the dependent variable and detected predictors. Red text indicates a parse error.
+
+Mixed-model formulas are also supported — use `(1|group)` for random intercepts and `(1 + x|group)` for random slopes. For example: `y ~ x1 + x2 + (1|school)` or `y ~ x1 + (1 + x1|school)`. When random effects are detected, the Cluster Configuration section appears automatically below.
+
+## Cluster Configuration
+
+This section appears automatically when your formula includes random effects (e.g., `(1|school)`). Each random effect term gets a configuration card with the following parameters:
+
+- **ICC (Intraclass Correlation Coefficient)** — The proportion of total variance due to differences between clusters (range 0.00–0.99, default 0.20). Higher ICC means more clustering.
+- **N clusters** — The number of groups (range 2–10,000, default 20). More clusters generally improve power more than larger clusters.
+
+For random slope models (e.g., `(1 + x1|school)`), two additional parameters appear:
+
+- **Slope variance** — The variance of the random slope across clusters (range 0.00–10.00, default 0.10).
+- **Slope-intercept corr** — The correlation between random intercepts and random slopes (range -1.00 to 1.00, default 0.00).
+
+For nested random effects (e.g., `(1|school/class)`), child terms show **N per parent** instead of N clusters — the number of sub-groups within each parent group.
 
 ## Variable Types
 

@@ -40,12 +40,24 @@ def generate_script(
     lines.append("from mcpower import MCPower")
 
     if data_file_path:
-        lines.append("import pandas as pd")
+        lines.append("import csv")
     lines.append("")
 
     # Data loading
     if data_file_path:
-        lines.append(f'data = pd.read_csv("{data_file_path}")')
+        lines.append(
+            f'with open({data_file_path!r}, newline="", encoding="utf-8-sig") as _f:'
+        )
+        lines.append("    _rows = list(csv.DictReader(_f))")
+        lines.append("data = {}")
+        lines.append("for _col in _rows[0]:")
+        lines.append('    if not _col or _col.startswith("Unnamed"):')
+        lines.append("        continue")
+        lines.append("    _raw = [_r[_col] for _r in _rows]")
+        lines.append("    try:")
+        lines.append("        data[_col] = [float(_v) for _v in _raw]")
+        lines.append("    except (ValueError, TypeError):")
+        lines.append("        data[_col] = _raw")
         lines.append("")
 
     # Model creation
@@ -79,8 +91,12 @@ def generate_script(
                 f" preserve_factor_level_names=True)"
             )
 
-    # Variable types
+    # Variable types — exclude data columns when data is uploaded
+    # (upload_data auto-detects types with correct factor labels)
     vtypes = state_snapshot.get("variable_types", {})
+    if data_file_path:
+        data_cols = set(state_snapshot.get("uploaded_columns", []))
+        vtypes = {k: v for k, v in vtypes.items() if k not in data_cols}
     vtype_str = build_variable_type_string(vtypes)
     if vtype_str:
         lines.append(f'model.set_variable_type("{vtype_str}")')
@@ -91,9 +107,27 @@ def generate_script(
         effects_str = ", ".join(f"{k}={v}" for k, v in effects.items())
         lines.append(f'model.set_effects("{effects_str}")')
 
+    # Cluster configurations (mixed models)
+    cluster_configs = state_snapshot.get("cluster_configs", [])
+    for cluster_cfg in cluster_configs:
+        gv = cluster_cfg["grouping_var"]
+        parts = [f'model.set_cluster("{gv}"']
+        parts.append(f"ICC={cluster_cfg['ICC']}")
+        if "n_clusters" in cluster_cfg:
+            parts.append(f"n_clusters={cluster_cfg['n_clusters']}")
+        if "n_per_parent" in cluster_cfg:
+            parts.append(f"n_per_parent={cluster_cfg['n_per_parent']}")
+        if cluster_cfg.get("random_slopes"):
+            parts.append(f"random_slopes={cluster_cfg['random_slopes']!r}")
+            parts.append(f"slope_variance={cluster_cfg.get('slope_variance', 0.0)}")
+            parts.append(
+                f"slope_intercept_corr={cluster_cfg.get('slope_intercept_corr', 0.0)}"
+            )
+        lines.append(", ".join(parts) + ")")
+
     # Simulation settings
     n_sims = state_snapshot.get("n_simulations", 1600)
-    n_sims_mm = state_snapshot.get("n_simulations_mixed_model", 400)
+    n_sims_mm = state_snapshot.get("n_simulations_mixed_model", 800)
     lines.append(f'model.set_simulations({n_sims}, model_type="linear")')
     lines.append(f'model.set_simulations({n_sims_mm}, model_type="mixed")')
 

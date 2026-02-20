@@ -18,6 +18,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from mcpower_gui.widgets.spin_boxes import DoubleSpinBox, SpinBox
+
 
 class AnovaFactorEditor(QWidget):
     """Editor for ANOVA factors with dependent variable, dynamic factor rows,
@@ -76,11 +78,15 @@ class AnovaFactorEditor(QWidget):
                 continue
             n_levels = row.get_n_levels()
             proportions = row.get_proportions()
-            types[name] = {
+            info: dict = {
                 "type": "factor",
                 "n_levels": n_levels,
                 "proportions": proportions,
             }
+            level_labels = row.get_level_labels()
+            if level_labels:
+                info["level_labels"] = level_labels
+            types[name] = info
         return types
 
     def get_factor_definitions(self) -> list[dict]:
@@ -118,6 +124,20 @@ class AnovaFactorEditor(QWidget):
             if name and ll:
                 labels[name] = ll
         return labels
+
+    def add_data_factor(self, factor_def: dict):
+        """Add a single data-backed factor row."""
+        row = self._create_factor_row(
+            factor_def.get("name", ""),
+            factor_def.get("n_levels", 2),
+            factor_def.get("proportions", []),
+        )
+        level_labels = factor_def.get("level_labels")
+        row.set_data_mode(level_labels=level_labels)
+        self._factor_rows.append(row)
+        self._factors_layout.addWidget(row)
+        self._data_mode = True
+        self._on_changed()
 
     def get_interactions(self) -> list[str]:
         """Return checked interaction terms (e.g. ['group1:group2'])."""
@@ -186,6 +206,18 @@ class AnovaFactorEditor(QWidget):
         self._data_mode = False
         for row in self._factor_rows:
             row.clear_data_mode()
+
+    def get_factor_names(self) -> set[str]:
+        """Return set of current factor names."""
+        return {r.get_name() for r in self._factor_rows if r.get_name()}
+
+    def clear_factors(self):
+        """Remove all factor rows."""
+        self._clear_factor_rows()
+
+    def notify_changed(self):
+        """Trigger formula/types rebuild and signal emission."""
+        self._on_changed()
 
     def refresh(self):
         """Force a rebuild of the formula and re-emit all signals."""
@@ -340,7 +372,7 @@ class _FactorRow(QWidget):
         top.addWidget(self._name_edit)
 
         top.addWidget(QLabel("Levels:"))
-        self._levels_spin = QSpinBox()
+        self._levels_spin = SpinBox()
         self._levels_spin.setRange(2, 20)
         self._levels_spin.setValue(n_levels)
         self._levels_spin.setFixedWidth(60)
@@ -368,7 +400,8 @@ class _FactorRow(QWidget):
         """Lock this row for data-upload mode."""
         self._data_mode = True
         self._name_edit.setReadOnly(True)
-        self._name_edit.setStyleSheet("background: palette(midlight);")
+        self._name_edit.setFrame(False)
+        self._name_edit.setStyleSheet("background: transparent;")
         self._levels_spin.setEnabled(False)
         self._prop_container.hide()
         if level_labels:
@@ -381,6 +414,7 @@ class _FactorRow(QWidget):
             return
         self._data_mode = False
         self._name_edit.setReadOnly(False)
+        self._name_edit.setFrame(True)
         self._name_edit.setStyleSheet("")
         self._levels_spin.setEnabled(True)
         self._prop_container.show()
@@ -443,7 +477,7 @@ class _FactorRow(QWidget):
 
         self._prop_layout.addWidget(QLabel("Proportions:"))
         for i in range(n_levels):
-            spin = QDoubleSpinBox()
+            spin = DoubleSpinBox()
             spin.setRange(0.01, 0.99)
             spin.setSingleStep(0.05)
             spin.setDecimals(2)

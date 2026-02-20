@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QObject, QPoint, Qt
-from PySide6.QtGui import QFontMetrics
+from PySide6.QtGui import QFont, QFontMetrics
 from PySide6.QtWidgets import (
     QFrame,
     QGroupBox,
@@ -117,22 +117,21 @@ class InfoButton(QPushButton):
         doc_page_name: str,
         parent: QWidget | None = None,
     ):
-        super().__init__("i", parent)
+        super().__init__("?", parent)
         self._doc_file = doc_file
         self._section_heading = section_heading
         self._doc_page_name = doc_page_name
 
-        self.setFixedSize(16, 16)
+        self.setFixedSize(20, 20)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setToolTip("Show help")
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.setStyleSheet(
             "QPushButton {"
             "  border: 1px solid palette(mid);"
-            "  border-radius: 8px;"
-            "  font-size: 10px;"
+            "  border-radius: 10px;"
+            "  font-size: 12px;"
             "  font-weight: bold;"
-            "  font-style: italic;"
             "  padding: 0px;"
             "  background: transparent;"
             "  color: palette(text);"
@@ -162,15 +161,27 @@ class InfoButton(QPushButton):
         popup.show()
 
 
-class _InfoPositioner(QObject):
-    """Event filter that keeps an InfoButton next to a QGroupBox title."""
+class TitleWidgetPositioner(QObject):
+    """Event filter that positions a child widget next to a QGroupBox title.
 
-    def __init__(self, group_box: QGroupBox, btn: InfoButton):
+    ``x_offset`` is the horizontal gap from the left edge of the group box
+    to where the widget is placed (added after the title text width).
+    """
+
+    def __init__(
+        self,
+        group_box: QGroupBox,
+        widget: QWidget,
+        x_offset: int = 22,
+        title_bold: bool = False,
+    ):
         super().__init__(group_box)
         self._group = group_box
-        self._btn = btn
-        btn.setParent(group_box)
-        btn.raise_()
+        self._widget = widget
+        self._x_offset = x_offset
+        self._title_bold = title_bold
+        widget.setParent(group_box)
+        widget.raise_()
         group_box.installEventFilter(self)
         self._reposition()
 
@@ -184,12 +195,15 @@ class _InfoPositioner(QObject):
         return False
 
     def _reposition(self):
-        fm = QFontMetrics(self._group.font())
+        font = QFont(self._group.font())
+        if self._title_bold:
+            font.setBold(True)
+        fm = QFontMetrics(font)
         title_w = fm.horizontalAdvance(self._group.title())
-        x = title_w + 14
+        x = title_w + self._x_offset
         title_h = fm.height()
-        y = max(0, (title_h - self._btn.height()) // 2)
-        self._btn.move(x, y)
+        y = max(0, (title_h - self._widget.height()) // 2)
+        self._widget.move(x, y)
 
 
 def attach_info_button(
@@ -197,6 +211,7 @@ def attach_info_button(
     doc_file: str,
     section_heading: str,
     doc_page_name: str,
+    title_bold: bool = False,
 ) -> InfoButton:
     """Attach an (i) info button next to a QGroupBox title.
 
@@ -204,5 +219,5 @@ def attach_info_button(
     Returns the created InfoButton.
     """
     btn = InfoButton(doc_file, section_heading, doc_page_name)
-    _InfoPositioner(group_box, btn)
+    TitleWidgetPositioner(group_box, btn, x_offset=22, title_bold=title_bold)
     return btn

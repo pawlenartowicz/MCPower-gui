@@ -13,7 +13,7 @@ def _dummy_record(**overrides):
             "formula": "y = x1",
             "alpha": 0.05,
             "n_simulations": 1600,
-            "n_simulations_mixed_model": 400,
+            "n_simulations_mixed_model": 800,
         },
         "analysis_params": {"sample_size": 100},
         "data_file_path": None,
@@ -82,3 +82,40 @@ class TestCapEnforcement:
 
         records = hm.list_records()
         assert len(records) == 25
+
+
+def test_update_custom_name_sets_name(tmp_path):
+    hm = HistoryManager(tmp_path)
+    record_id = hm.save(**_dummy_record())
+    hm.update_custom_name(record_id, "My Run")
+    record = hm.load(record_id)
+    assert record["custom_name"] == "My Run"
+
+
+def test_update_custom_name_clears_name(tmp_path):
+    hm = HistoryManager(tmp_path)
+    record_id = hm.save(**_dummy_record())
+    hm.update_custom_name(record_id, "My Run")
+    hm.update_custom_name(record_id, None)
+    record = hm.load(record_id)
+    assert "custom_name" not in record
+
+
+def test_update_custom_name_nonexistent_is_noop(tmp_path):
+    hm = HistoryManager(tmp_path)
+    hm.update_custom_name("doesnotexist", "Boom")  # must not raise
+
+
+def test_list_records_includes_custom_name(tmp_path):
+    hm = HistoryManager(tmp_path)
+    record_id = hm.save(**_dummy_record())
+    hm.update_custom_name(record_id, "Named")
+    summaries = hm.list_records()
+    assert summaries[0]["custom_name"] == "Named"
+
+
+def test_list_records_custom_name_none_when_absent(tmp_path):
+    hm = HistoryManager(tmp_path)
+    hm.save(**_dummy_record())
+    summaries = hm.list_records()
+    assert summaries[0]["custom_name"] is None

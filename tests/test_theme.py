@@ -26,8 +26,14 @@ from mcpower_gui.theme import (  # noqa: E402
 
 @pytest.fixture(autouse=True)
 def _reset_theme():
-    """Reset to light after each test to avoid cross-contamination."""
+    """Reset theme after each test to avoid cross-contamination.
+
+    Saves and restores both the persisted QSettings value and in-memory state
+    so tests that call save_theme_mode() don't leak into the user's config.
+    """
+    original = saved_theme_mode()
     yield
+    save_theme_mode(original)
     apply_theme(ThemeMode.LIGHT)
 
 

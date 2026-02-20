@@ -13,6 +13,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from mcpower_gui.widgets.spin_boxes import DoubleSpinBox
+
 from mcpower_gui.theme import current_colors
 
 _EFFECT_SIZES = {
@@ -85,6 +87,7 @@ class EffectsEditor(QWidget):
         self._predictor_types: dict[str, str] = {}
         self._buttons: list[tuple[QPushButton, str, str]] = []  # (btn, short, long)
         self._updating_text = False
+        self._label_width = 120
 
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -108,6 +111,26 @@ class EffectsEditor(QWidget):
                 item.widget().deleteLater()
         self._rows.clear()
 
+        # Compute dynamic label width from all label texts
+        fm = self.fontMetrics()
+        label_width = 120
+        for name in predictors:
+            w = fm.horizontalAdvance(name) + 12
+            if w > label_width:
+                label_width = w
+            # Account for reference level labels too
+            if self._predictor_types.get(
+                name
+            ) == "factor" and _is_first_level_of_factor(name, predictors):
+                base = _FACTOR_LEVEL_RE.sub("", name).rstrip(":")
+                ref_label = (factor_refs or {}).get(base)
+                ref_text = _reference_label(name, ref_label)
+                w = fm.horizontalAdvance(ref_text) + 12
+                if w > label_width:
+                    label_width = w
+        label_width = min(label_width, 250)
+        self._label_width = label_width
+
         for name in predictors:
             # Insert reference level placeholder before the first dummy
             if self._predictor_types.get(
@@ -130,11 +153,12 @@ class EffectsEditor(QWidget):
         h.setContentsMargins(0, 2, 0, 2)
 
         label = QLabel(label_text)
-        label.setFixedWidth(120)
+        label.setFixedWidth(self._label_width)
+        label.setToolTip(label_text)
         label.setStyleSheet(f"color: {current_colors()['muted']};")
         h.addWidget(label)
 
-        spin = QDoubleSpinBox()
+        spin = DoubleSpinBox()
         spin.setRange(0.0, 0.0)
         spin.setValue(0.0)
         spin.setDecimals(2)
@@ -151,10 +175,11 @@ class EffectsEditor(QWidget):
         h.setContentsMargins(0, 2, 0, 2)
 
         label = QLabel(name)
-        label.setFixedWidth(120)
+        label.setFixedWidth(self._label_width)
+        label.setToolTip(name)
         h.addWidget(label)
 
-        spin = QDoubleSpinBox()
+        spin = DoubleSpinBox()
         spin.setRange(-2.0, 2.0)
         spin.setSingleStep(0.05)
         spin.setDecimals(2)

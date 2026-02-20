@@ -79,6 +79,7 @@ class HistoryManager:
                         "ss_from": aparams.get("ss_from"),
                         "ss_to": aparams.get("ss_to"),
                         "ss_by": aparams.get("ss_by"),
+                        "custom_name": data.get("custom_name"),
                     }
                 )
             except (json.JSONDecodeError, KeyError):
@@ -103,6 +104,22 @@ class HistoryManager:
             path.unlink()
             return True
         return False
+
+    def update_custom_name(self, record_id: str, name: str | None) -> None:
+        """Set or clear a custom display name on an existing history record."""
+        path = self._dir / f"{record_id}.json"
+        if not path.exists():
+            return
+        try:
+            record = json.loads(path.read_text(encoding="utf-8"))
+            # treat empty string as "clear"
+            if name:
+                record["custom_name"] = name
+            else:
+                record.pop("custom_name", None)
+            path.write_text(json.dumps(record, default=str, indent=2), encoding="utf-8")
+        except (json.JSONDecodeError, OSError):
+            return
 
     def _enforce_cap(self):
         """Delete oldest files when exceeding MAX_ENTRIES."""

@@ -47,7 +47,9 @@ class AnalysisWorker(QThread):
         # Snapshot model state on the UI thread
         self._snap = state.snapshot()
         self._uploaded_data = (
-            state.uploaded_data.copy() if state.uploaded_data is not None else None
+            {k: list(v) for k, v in state.uploaded_data.items()}
+            if state.uploaded_data is not None
+            else None
         )
         self._data_file_path = state.data_file_path
         self._mode = mode
@@ -85,8 +87,21 @@ class AnalysisWorker(QThread):
                     data_types=data_types if data_types else None,
                 )
 
-            # Set variable types if any non-continuous
-            vtype_str = build_variable_type_string(snap["variable_types"])
+            # Set variable types if any non-continuous.
+            # When data is uploaded, exclude data columns — _apply_data handles
+            # their type detection (with correct level labels).  Calling
+            # set_variable_type for those columns would create integer-indexed
+            # dummies that shadow the data-detected labels.
+            if self._uploaded_data is not None:
+                data_cols = set(self._uploaded_data.keys())
+                filtered_vtypes = {
+                    k: v
+                    for k, v in snap["variable_types"].items()
+                    if k not in data_cols
+                }
+            else:
+                filtered_vtypes = snap["variable_types"]
+            vtype_str = build_variable_type_string(filtered_vtypes)
             if vtype_str:
                 model.set_variable_type(vtype_str)
 
@@ -96,6 +111,21 @@ class AnalysisWorker(QThread):
             )
             if effects_str:
                 model.set_effects(effects_str)
+
+            # Configure clusters for mixed models
+            for cluster_cfg in snap.get("cluster_configs", []):
+                kwargs: dict = {"ICC": cluster_cfg["ICC"]}
+                if "n_clusters" in cluster_cfg:
+                    kwargs["n_clusters"] = cluster_cfg["n_clusters"]
+                if "n_per_parent" in cluster_cfg:
+                    kwargs["n_per_parent"] = cluster_cfg["n_per_parent"]
+                if cluster_cfg.get("random_slopes"):
+                    kwargs["random_slopes"] = cluster_cfg["random_slopes"]
+                    kwargs["slope_variance"] = cluster_cfg.get("slope_variance", 0.0)
+                    kwargs["slope_intercept_corr"] = cluster_cfg.get(
+                        "slope_intercept_corr", 0.0
+                    )
+                model.set_cluster(cluster_cfg["grouping_var"], **kwargs)
 
             model.set_simulations(snap["n_simulations"], model_type="linear")
             model.set_simulations(snap["n_simulations_mixed_model"], model_type="mixed")

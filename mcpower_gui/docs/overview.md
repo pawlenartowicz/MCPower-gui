@@ -30,4 +30,4 @@ MCPower uses R-style formula notation:
 | `y = x1 * x2` | Shorthand for `x1 + x2 + x1:x2` |
 Both `=` and `~` are accepted as separators between the dependent variable and predictors.
 
-**Note:** Mixed-effects models (e.g., `y ~ x + (1|school)`) are supported by the MCPower library but are not yet available in the GUI. Mixed model support in the app is planned for a future release.
+**Mixed-effects models** are also supported. Use the syntax `y ~ x + (1|school)` to include random effects. When a mixed-model formula is entered, a cluster configuration editor appears automatically where you can set ICC, number of clusters, and other parameters.

@@ -12,6 +12,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from mcpower_gui.widgets.spin_boxes import DoubleSpinBox, SpinBox
+
 
 class VariableTypeEditor(QWidget):
     """Widget with one row per predictor for configuring variable types.
@@ -45,9 +47,18 @@ class VariableTypeEditor(QWidget):
                 item.widget().deleteLater()
         self._rows.clear()
 
+        # Compute dynamic label width from predictor names
+        fm = self.fontMetrics()
+        label_width = 120
+        for name in predictors:
+            w = fm.horizontalAdvance(name) + 12
+            if w > label_width:
+                label_width = w
+        label_width = min(label_width, 250)
+
         for name in predictors:
             existing = current_types.get(name, {})
-            row = _PredictorRow(name, existing)
+            row = _PredictorRow(name, existing, label_width=label_width)
             row.changed.connect(self._emit)
             self._rows[name] = row
             self._layout.addWidget(row)
@@ -73,7 +84,7 @@ class _PredictorRow(QWidget):
 
     changed = Signal()
 
-    def __init__(self, name: str, existing: dict, parent=None):
+    def __init__(self, name: str, existing: dict, parent=None, label_width: int = 120):
         super().__init__(parent)
         self._name = name
         self._proportion_spin: QDoubleSpinBox | None = None
@@ -82,12 +93,14 @@ class _PredictorRow(QWidget):
         self._factor_container: QWidget | None = None
         self._suppress_signals = False
         self._data_mode = False
+        self._level_labels: list[str] | None = existing.get("level_labels")
 
         h = QHBoxLayout(self)
         h.setContentsMargins(0, 2, 0, 2)
 
         label = QLabel(name)
-        label.setFixedWidth(120)
+        label.setFixedWidth(label_width)
+        label.setToolTip(name)
         h.addWidget(label)
 
         self._type_combo = QComboBox()
@@ -116,6 +129,8 @@ class _PredictorRow(QWidget):
         self._data_mode = True
         self._type_combo.setEnabled(False)
         self._hide_proportion_widgets()
+        if "level_labels" in info:
+            self._level_labels = info["level_labels"]
 
     def clear_data_mode(self):
         """Disable data-upload mode: re-enable type combo."""
@@ -151,7 +166,7 @@ class _PredictorRow(QWidget):
             rh = QHBoxLayout(row)
             rh.setContentsMargins(0, 0, 0, 0)
             rh.addWidget(QLabel("Proportion:"))
-            self._proportion_spin = QDoubleSpinBox()
+            self._proportion_spin = DoubleSpinBox()
             self._proportion_spin.setRange(0.01, 0.99)
             self._proportion_spin.setSingleStep(0.05)
             self._proportion_spin.setDecimals(2)
@@ -168,7 +183,7 @@ class _PredictorRow(QWidget):
             lh = QHBoxLayout(levels_row)
             lh.setContentsMargins(0, 0, 0, 0)
             lh.addWidget(QLabel("Levels:"))
-            self._levels_spin = QSpinBox()
+            self._levels_spin = SpinBox()
             self._levels_spin.setRange(2, 20)
             n_levels = existing.get("n_levels", 3)
             self._levels_spin.setValue(n_levels)
@@ -213,7 +228,7 @@ class _PredictorRow(QWidget):
 
         self._factor_layout.addWidget(QLabel("Proportions:"))
         for i in range(n_levels):
-            spin = QDoubleSpinBox()
+            spin = DoubleSpinBox()
             spin.setRange(0.01, 0.99)
             spin.setSingleStep(0.05)
             spin.setDecimals(2)
@@ -261,4 +276,6 @@ class _PredictorRow(QWidget):
             if self._levels_spin is not None:
                 info["n_levels"] = self._levels_spin.value()
             info["proportions"] = [s.value() for s in self._factor_proportions]
+            if self._level_labels:
+                info["level_labels"] = self._level_labels
         return info

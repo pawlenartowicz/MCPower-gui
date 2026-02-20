@@ -1,0 +1,505 @@
+# ============================================================
+# MCPower GUI — Tutorial Tips
+# ============================================================
+# Each tip: id, tab, text, style, priority, conditions.
+# Optional: type (default "text"), for special widgets.
+#
+# Conditions: all must match (AND). Operators:
+#   key: value        exact match
+#   key: "!empty"     string is not empty
+#   key: "!value"     not equal
+#   key: ">=N"        greater or equal
+#
+# Text supports {variable} interpolation from state.
+# Priority: lower = shown first.
+#
+# clusters_resolved: true when either no clusters exist or
+# clusters are fully configured — eliminates duplicate rules.
+# ============================================================
+
+# ── MODEL TAB: Main workflow (no section open) ──────────────
+
+# --- No formula yet (linear) ---
+- id: enter_formula_linear
+  tab: model
+  text: "\u2192 Enter a formula (e.g. score = study_hours + received_help) or switch to ANOVA mode"
+  style: next
+  priority: 100
+  conditions:
+    formula: ""
+    mode: linear
+    data_section_open: false
+    corr_section_open: false
+
+- id: formula_examples
+  tab: model
+  text: ""
+  style: normal
+  type: formula_examples
+  priority: 101
+  conditions:
+    formula: ""
+    mode: linear
+    data_section_open: false
+    corr_section_open: false
+
+# --- No formula yet (ANOVA) ---
+- id: enter_formula_anova
+  tab: model
+  text: "\u2192 Add at least one factor below to define your ANOVA model"
+  style: next
+  priority: 100
+  conditions:
+    formula: ""
+    mode: anova
+    data_section_open: false
+    corr_section_open: false
+
+# --- No formula: general data hint ---
+- id: data_hint_start
+  tab: model
+  text: "   Data: generate synthetic (just define variables), or upload CSV for real distributions."
+  style: optional
+  priority: 110
+  conditions:
+    formula: ""
+    data_section_open: false
+    corr_section_open: false
+
+# --- Formula entered, mixed model, clusters not configured ---
+- id: formula_done_mixed
+  tab: model
+  text: "\u2713 Formula: {formula_display} (mixed model)"
+  style: done
+  priority: 200
+  conditions:
+    formula: "!empty"
+    has_clusters: true
+    clusters_configured: false
+    data_section_open: false
+    corr_section_open: false
+
+- id: configure_clusters
+  tab: model
+  text: "\u2192 Configure cluster settings below: ICC, number of clusters"
+  style: next
+  priority: 201
+  conditions:
+    formula: "!empty"
+    has_clusters: true
+    clusters_configured: false
+    data_section_open: false
+    corr_section_open: false
+
+# --- Formula entered, no effects (clusters resolved) ---
+- id: formula_done
+  tab: model
+  text: "\u2713 Formula: {formula_display}"
+  style: done
+  priority: 300
+  conditions:
+    formula: "!empty"
+    has_effects: false
+    clusters_resolved: true
+    data_section_open: false
+    corr_section_open: false
+
+- id: set_effects
+  tab: model
+  text: "\u2192 Set effect sizes below (use Small / Medium / Large for Cohen\u2019s conventions)"
+  style: next
+  priority: 310
+  conditions:
+    formula: "!empty"
+    has_effects: false
+    clusters_resolved: true
+    data_section_open: false
+    corr_section_open: false
+
+- id: check_types
+  tab: model
+  text: "\u2192 Check variable types \u2014 adjust binary proportions or factor levels"
+  style: next
+  priority: 320
+  conditions:
+    formula: "!empty"
+    has_effects: false
+    has_non_continuous: true
+    mode: linear
+    data_section_open: false
+    corr_section_open: false
+
+- id: optional_upload
+  tab: model
+  text: "   Optional: Upload CSV in \u2018Use Your Data\u2019 for empirical distributions"
+  style: optional
+  priority: 330
+  conditions:
+    formula: "!empty"
+    has_effects: false
+    data_uploaded: false
+    data_section_open: false
+    corr_section_open: false
+
+- id: optional_correlations
+  tab: model
+  text: "   Optional: Set correlations between predictors"
+  style: optional
+  priority: 340
+  conditions:
+    formula: "!empty"
+    has_effects: false
+    mode: linear
+    correlable_count: ">=2"
+    data_section_open: false
+    corr_section_open: false
+
+# --- Model ready (clusters resolved) ---
+- id: model_ready
+  tab: model
+  text: "\u2713 Model ready \u2014 go to Analysis tab"
+  style: done
+  priority: 400
+  conditions:
+    formula: "!empty"
+    has_effects: true
+    clusters_resolved: true
+    data_section_open: false
+    corr_section_open: false
+
+- id: model_ready_find_power
+  tab: model
+  text: "   \u2022 Find Power: given a sample size, what\u2019s the detection probability?"
+  style: normal
+  priority: 410
+  conditions:
+    formula: "!empty"
+    has_effects: true
+    clusters_resolved: true
+    data_section_open: false
+    corr_section_open: false
+
+- id: model_ready_find_ss
+  tab: model
+  text: "   \u2022 Find Sample Size: what N do you need for 80% power?"
+  style: normal
+  priority: 420
+  conditions:
+    formula: "!empty"
+    has_effects: true
+    clusters_resolved: true
+    data_section_open: false
+    corr_section_open: false
+
+# --- Effect sizes info (always visible when model has effects) ---
+- id: effect_sizes_info
+  tab: model
+  text: "   Effect sizes: S=0.1, M=0.3, L=0.5 (Cohen\u2019s conventions) \u2014 adjust anytime"
+  style: optional
+  priority: 430
+  conditions:
+    formula: "!empty"
+    has_effects: true
+    clusters_resolved: true
+    data_section_open: false
+    corr_section_open: false
+
+# --- Optional: upload CSV to mix with synthetic (when model ready, no data) ---
+- id: optional_upload_mix
+  tab: model
+  text: "   Optional: Upload CSV in \u2018Use Your Data\u2019 \u2014 mix uploaded and synthetic data"
+  style: optional
+  priority: 440
+  conditions:
+    formula: "!empty"
+    has_effects: true
+    data_uploaded: false
+    clusters_resolved: true
+    data_section_open: false
+    corr_section_open: false
+
+# --- Data file info (supplement, not in data section) ---
+- id: data_info_supplement
+  tab: model
+  text: "\u2713 Using: {data_filename} ({data_rows} rows) \u2014 types auto-detected"
+  style: done
+  priority: 800
+  conditions:
+    formula: "!empty"
+    data_uploaded: true
+    data_section_open: false
+    corr_section_open: false
+
+- id: data_mix_info
+  tab: model
+  text: "   Variables not in CSV are generated synthetically \u2014 you can mix both!"
+  style: optional
+  priority: 810
+  conditions:
+    formula: "!empty"
+    data_uploaded: true
+    data_section_open: false
+    corr_section_open: false
+
+# ── MODEL TAB: Data section open ────────────────────────────
+
+- id: data_upload_prompt
+  tab: model
+  text: "\u2192 Upload a CSV file: one column per variable, first row = headers"
+  style: next
+  priority: 100
+  conditions:
+    data_section_open: true
+    data_uploaded: false
+
+- id: data_synthetic_mix_hint
+  tab: model
+  text: "   Currently using synthetic data \u2014 upload CSV to mix real and generated distributions"
+  style: optional
+  priority: 105
+  conditions:
+    data_section_open: true
+    data_uploaded: false
+    formula: "!empty"
+
+- id: data_type_detection_linear
+  tab: model
+  text: "   Numeric columns \u2192 continuous, 2 values \u2192 binary, 3\u20136 values \u2192 factor"
+  style: optional
+  priority: 110
+  conditions:
+    data_section_open: true
+    data_uploaded: false
+    mode: linear
+
+- id: data_type_detection_anova
+  tab: model
+  text: "   ANOVA mode: columns with 2\u201312 unique values are detected as factors"
+  style: optional
+  priority: 110
+  conditions:
+    data_section_open: true
+    data_uploaded: false
+    mode: anova
+
+- id: data_uploaded_info
+  tab: model
+  text: "\u2713 Using: {data_filename} ({data_rows} rows) \u2014 types auto-detected"
+  style: done
+  priority: 100
+  conditions:
+    data_section_open: true
+    data_uploaded: true
+
+- id: data_mix_uploaded
+  tab: model
+  text: "   Variables not in CSV are generated synthetically \u2014 you can mix both!"
+  style: optional
+  priority: 105
+  conditions:
+    data_section_open: true
+    data_uploaded: true
+
+- id: data_effect_sizes_info
+  tab: model
+  text: "   Effect sizes are standardized betas: S=0.1, M=0.3, L=0.5 (Cohen\u2019s conventions)"
+  style: optional
+  priority: 110
+  conditions:
+    data_section_open: true
+    data_uploaded: true
+
+- id: data_corr_mode_info
+  tab: model
+  text: "   Correlation mode: {corr_mode} (change below)"
+  style: optional
+  priority: 120
+  conditions:
+    data_section_open: true
+    data_uploaded: true
+    mode: linear
+
+# ── MODEL TAB: Correlations section open ────────────────────
+
+- id: corr_need_predictors
+  tab: model
+  text: "   Need at least 2 continuous/binary predictors for correlations"
+  style: optional
+  priority: 100
+  conditions:
+    corr_section_open: true
+    data_section_open: false
+    correlable_count: 0
+
+- id: corr_need_predictors_one
+  tab: model
+  text: "   Need at least 2 continuous/binary predictors for correlations"
+  style: optional
+  priority: 100
+  conditions:
+    corr_section_open: true
+    data_section_open: false
+    correlable_count: 1
+
+- id: corr_from_data
+  tab: model
+  text: "\u2713 Correlations computed from uploaded data"
+  style: done
+  priority: 100
+  conditions:
+    corr_section_open: true
+    data_section_open: false
+    data_uploaded: true
+    correlable_count: ">=2"
+
+- id: corr_mode_info
+  tab: model
+  text: "   Mode: {corr_mode} \u2014 strict = locked to data, partial = data + edits, no = manual only"
+  style: optional
+  priority: 110
+  conditions:
+    corr_section_open: true
+    data_section_open: false
+    data_uploaded: true
+    correlable_count: ">=2"
+
+- id: corr_manual
+  tab: model
+  text: "\u2192 Set pairwise correlations between predictors (default: 0)"
+  style: next
+  priority: 100
+  conditions:
+    corr_section_open: true
+    data_section_open: false
+    data_uploaded: false
+    correlable_count: ">=2"
+
+- id: corr_upload_hint
+  tab: model
+  text: "   Upload CSV in \u2018Use Your Data\u2019 to auto-compute from data"
+  style: optional
+  priority: 110
+  conditions:
+    corr_section_open: true
+    data_section_open: false
+    data_uploaded: false
+    correlable_count: ">=2"
+
+# ── MODEL TAB: Model progress (supplement when section open) ─
+
+- id: progress_clusters
+  tab: model
+  text: "\u2192 Configure cluster settings: ICC, number of clusters"
+  style: next
+  priority: 900
+  conditions:
+    formula: "!empty"
+    has_clusters: true
+    clusters_configured: false
+    data_section_open: true
+
+- id: progress_clusters_corr
+  tab: model
+  text: "\u2192 Configure cluster settings: ICC, number of clusters"
+  style: next
+  priority: 900
+  conditions:
+    formula: "!empty"
+    has_clusters: true
+    clusters_configured: false
+    corr_section_open: true
+
+- id: progress_effects
+  tab: model
+  text: "\u2192 Set effect sizes below (use Small / Medium / Large for Cohen\u2019s conventions)"
+  style: next
+  priority: 900
+  conditions:
+    formula: "!empty"
+    has_effects: false
+    clusters_resolved: true
+    data_section_open: true
+
+- id: progress_effects_corr
+  tab: model
+  text: "\u2192 Set effect sizes below (use Small / Medium / Large for Cohen\u2019s conventions)"
+  style: next
+  priority: 900
+  conditions:
+    formula: "!empty"
+    has_effects: false
+    clusters_resolved: true
+    corr_section_open: true
+
+- id: progress_ready
+  tab: model
+  text: "\u2713 Model ready \u2014 go to Analysis tab"
+  style: done
+  priority: 900
+  conditions:
+    formula: "!empty"
+    has_effects: true
+    clusters_resolved: true
+    data_section_open: true
+
+- id: progress_ready_corr
+  tab: model
+  text: "\u2713 Model ready \u2014 go to Analysis tab"
+  style: done
+  priority: 900
+  conditions:
+    formula: "!empty"
+    has_effects: true
+    clusters_resolved: true
+    corr_section_open: true
+
+# ── ANALYSIS TAB ────────────────────────────────────────────
+
+- id: analysis_not_ready
+  tab: analysis
+  text: "\u2192 Define your model in the Model tab first"
+  style: next
+  priority: 100
+  conditions:
+    model_ready: false
+
+- id: analysis_model_info
+  tab: analysis
+  text: "\u2713 Model: {formula_display} | {n_predictors} predictor(s)"
+  style: done
+  priority: 100
+  conditions:
+    model_ready: true
+
+- id: analysis_find_power
+  tab: analysis
+  text: "   \u2022 Find Power: set sample size below, then run"
+  style: normal
+  priority: 110
+  conditions:
+    model_ready: true
+
+- id: analysis_find_ss
+  tab: analysis
+  text: "   \u2022 Find Sample Size: set range below, then search"
+  style: normal
+  priority: 120
+  conditions:
+    model_ready: true
+
+- id: analysis_post_hoc
+  tab: analysis
+  text: "   Optional: Select post hoc comparisons below"
+  style: optional
+  priority: 130
+  conditions:
+    model_ready: true
+    has_factors: true
+
+- id: analysis_extras
+  tab: analysis
+  text: "   Optional: Enable Scenarios | Apply correction"
+  style: optional
+  priority: 140
+  conditions:
+    model_ready: true

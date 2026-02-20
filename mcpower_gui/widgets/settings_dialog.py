@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -12,13 +13,17 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
+    QLabel,
     QListWidget,
+    QPushButton,
     QScrollArea,
     QSpinBox,
     QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
+
+from mcpower_gui.widgets.spin_boxes import DoubleSpinBox, SpinBox
 
 from mcpower_gui.state import SCENARIO_DEFAULTS, ModelState
 from mcpower_gui.theme import (
@@ -37,6 +42,8 @@ class SettingsDialog(QDialog):
     """Modal dialog for configuring simulations, alpha, seed, parallel, and
     scenario parameters.  Writes to *state* only on Accept.
     """
+
+    reopen_tips_requested = Signal()
 
     def __init__(self, state: ModelState, parent=None):
         super().__init__(parent)
@@ -110,26 +117,34 @@ class SettingsDialog(QDialog):
         self._theme.currentIndexChanged.connect(self._on_theme_changed)
         gf.addRow("Theme:", self._theme)
 
-        self._font_size = QSpinBox()
+        self._font_size = SpinBox()
         self._font_size.setRange(8, 20)
         cur_size = saved_font_size()
-        self._font_size.setValue(cur_size if cur_size else 11)
+        self._font_size.setValue(cur_size if cur_size else 10)
         self._font_size.valueChanged.connect(self._on_font_size_changed)
         gf.addRow("Font size:", self._font_size)
 
-        self._n_simulations = QSpinBox()
+        self._reopen_tips_btn = QPushButton("Reopen Tips")
+        self._reopen_tips_btn.setFixedWidth(120)
+        self._reopen_tips_btn.setToolTip(
+            "Re-show the tutorial hints if you dismissed them"
+        )
+        self._reopen_tips_btn.clicked.connect(self._on_reopen_tips)
+        gf.addRow("Tutorial tips:", self._reopen_tips_btn)
+
+        self._n_simulations = SpinBox()
         self._n_simulations.setRange(100, 100_000)
         self._n_simulations.setValue(state.n_simulations)
         self._n_simulations.setSingleStep(100)
         gf.addRow("Simulations (OLS):", self._n_simulations)
 
-        self._n_simulations_mixed = QSpinBox()
+        self._n_simulations_mixed = SpinBox()
         self._n_simulations_mixed.setRange(100, 100_000)
         self._n_simulations_mixed.setValue(state.n_simulations_mixed_model)
         self._n_simulations_mixed.setSingleStep(100)
         gf.addRow("Simulations (mixed):", self._n_simulations_mixed)
 
-        self._alpha = QDoubleSpinBox()
+        self._alpha = DoubleSpinBox()
         self._alpha.setRange(0.001, 0.5)
         self._alpha.setValue(state.alpha)
         self._alpha.setSingleStep(0.005)
@@ -137,14 +152,14 @@ class SettingsDialog(QDialog):
         gf.addRow("Alpha:", self._alpha)
 
         # QDoubleSpinBox with decimals=0 because QSpinBox max is ~2.1B
-        self._seed = QDoubleSpinBox()
+        self._seed = DoubleSpinBox()
         self._seed.setDecimals(0)
         self._seed.setRange(0, 3_000_000_000)
         self._seed.setValue(state.seed)
         self._seed.setSingleStep(1)
         gf.addRow("Seed:", self._seed)
 
-        self._max_failed = QDoubleSpinBox()
+        self._max_failed = DoubleSpinBox()
         self._max_failed.setRange(0.0, 1.0)
         self._max_failed.setValue(state.max_failed_simulations)
         self._max_failed.setSingleStep(0.01)
@@ -170,7 +185,7 @@ class SettingsDialog(QDialog):
         self._cores_mode.addItem("Custom", "custom")
         gf.addRow("N cores:", self._cores_mode)
 
-        self._n_cores = QSpinBox()
+        self._n_cores = SpinBox()
         self._n_cores.setRange(1, cpu_count)
         self._n_cores.setValue(min(state.n_cores, cpu_count))
         self._n_cores.setVisible(False)
@@ -219,14 +234,16 @@ class SettingsDialog(QDialog):
         page = QWidget()
         page_layout = QVBoxLayout(page)
 
-        self._scenario_spins: dict[str, dict[str, QDoubleSpinBox]] = {}
+        self._scenario_spins: dict[str, dict] = {}
+        self._scenario_combos: dict[str, dict[str, QComboBox]] = {}
         for scenario_name, defaults in SCENARIO_DEFAULTS.items():
             title = f"Scenario: {scenario_name.capitalize()}"
             if scenario_name == "optimistic":
                 title += " (default)"
             cfg = state.scenario_configs.get(scenario_name, {})
-            group, spins = self._build_scenario_group(title, cfg, defaults)
+            group, spins, combos = self._build_scenario_group(title, cfg, defaults)
             self._scenario_spins[scenario_name] = spins
+            self._scenario_combos[scenario_name] = combos
             page_layout.addWidget(group)
 
         page_layout.addStretch()
@@ -243,23 +260,93 @@ class SettingsDialog(QDialog):
         "distribution_change_prob": ("Distribution change prob:", 0, 1),
     }
 
+    _DIST_OPTIONS = ["normal", "heavy_tailed", "skewed"]
+    _DIST_ITEMS = [("normal", "Normal"), ("heavy_tailed", "Heavy tailed"), ("skewed", "Skewed")]
+
     def _build_scenario_group(
         self, title: str, cfg: dict, defaults: dict
-    ) -> tuple[QGroupBox, dict[str, QDoubleSpinBox]]:
-        """Create a scenario group box with 4 spinboxes."""
+    ) -> tuple[QGroupBox, dict, dict[str, QComboBox]]:
+        """Create a scenario group box with OLS + LME perturbation controls."""
         group = QGroupBox(title)
         form = QFormLayout(group)
-        spins: dict[str, QDoubleSpinBox] = {}
+        spins: dict = {}
+        combos: dict[str, QComboBox] = {}
+
+        # ── OLS / General perturbations ─────────────────────────
         for key, (label, lo, hi) in self._SPIN_CONFIGS.items():
-            spin = QDoubleSpinBox()
+            spin = DoubleSpinBox()
             spin.setRange(lo, hi)
             spin.setSingleStep(0.05)
             spin.setDecimals(2)
             spin.setValue(cfg.get(key, defaults[key]))
             form.addRow(label, spin)
             spins[key] = spin
+
+        # ── Mixed Effects Perturbations ──────────────────────────
+        sep = QLabel("Mixed Effects Perturbations")
+        sep.setStyleSheet("color: gray; font-style: italic; padding-top: 6px;")
+        form.addRow(sep)
+
+        # icc_noise_sd
+        icc_spin = DoubleSpinBox()
+        icc_spin.setRange(0.0, 2.0)
+        icc_spin.setSingleStep(0.05)
+        icc_spin.setDecimals(2)
+        icc_spin.setValue(cfg.get("icc_noise_sd", defaults.get("icc_noise_sd", 0.0)))
+        form.addRow("ICC noise SD:", icc_spin)
+        spins["icc_noise_sd"] = icc_spin
+
+        # random_effect_dist
+        re_dist_combo = QComboBox()
+        for val, lbl in self._DIST_ITEMS:
+            re_dist_combo.addItem(lbl, val)
+        re_val = cfg.get("random_effect_dist", defaults.get("random_effect_dist", "normal"))
+        re_dist_combo.setCurrentIndex(
+            self._DIST_OPTIONS.index(re_val) if re_val in self._DIST_OPTIONS else 0
+        )
+        form.addRow("Random effect dist:", re_dist_combo)
+        combos["random_effect_dist"] = re_dist_combo
+
+        # random_effect_df
+        re_df_spin = SpinBox()
+        re_df_spin.setRange(2, 50)
+        re_df_spin.setValue(cfg.get("random_effect_df", defaults.get("random_effect_df", 5)))
+        form.addRow("Random effect df:", re_df_spin)
+        spins["random_effect_df"] = re_df_spin
+
+        # residual_dist
+        res_dist_combo = QComboBox()
+        for val, lbl in self._DIST_ITEMS:
+            res_dist_combo.addItem(lbl, val)
+        res_val = cfg.get("residual_dist", defaults.get("residual_dist", "normal"))
+        res_dist_combo.setCurrentIndex(
+            self._DIST_OPTIONS.index(res_val) if res_val in self._DIST_OPTIONS else 0
+        )
+        form.addRow("Residual dist:", res_dist_combo)
+        combos["residual_dist"] = res_dist_combo
+
+        # residual_change_prob
+        res_prob_spin = DoubleSpinBox()
+        res_prob_spin.setRange(0.0, 1.0)
+        res_prob_spin.setSingleStep(0.05)
+        res_prob_spin.setDecimals(2)
+        res_prob_spin.setValue(cfg.get("residual_change_prob", defaults.get("residual_change_prob", 0.0)))
+        form.addRow("Residual change prob:", res_prob_spin)
+        spins["residual_change_prob"] = res_prob_spin
+
+        # residual_df
+        res_df_spin = SpinBox()
+        res_df_spin.setRange(2, 50)
+        res_df_spin.setValue(cfg.get("residual_df", defaults.get("residual_df", 10)))
+        form.addRow("Residual df:", res_df_spin)
+        spins["residual_df"] = res_df_spin
+
         attach_info_button(group, "settings.md", "Scenario Parameters", "Settings")
-        return group, spins
+        return group, spins, combos
+
+    def _on_reopen_tips(self):
+        """Emit signal to reopen tutorial tips in the main window."""
+        self.reopen_tips_requested.emit()
 
     def _on_theme_changed(self):
         """Live-preview the selected theme."""
@@ -287,10 +374,13 @@ class SettingsDialog(QDialog):
         s.parallel = self._parallel.currentData()
         cores_data = self._cores_mode.currentData()
         s.n_cores = self._n_cores.value() if cores_data == "custom" else cores_data
-        s.scenario_configs = {
-            name: {key: spins[key].value() for key in spins}
-            for name, spins in self._scenario_spins.items()
-        }
+        s.scenario_configs = {}
+        for name in self._scenario_spins:
+            cfg = {key: spin.value() for key, spin in self._scenario_spins[name].items()}
+            cfg.update(
+                {key: combo.currentData() for key, combo in self._scenario_combos[name].items()}
+            )
+            s.scenario_configs[name] = cfg
         mode = ThemeMode(self._theme.currentData())
         save_theme_mode(mode)
         apply_theme(mode)

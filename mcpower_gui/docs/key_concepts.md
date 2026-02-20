@@ -89,7 +89,7 @@ Scenario parameters are configured in Settings. Running with scenarios enabled g
 
 ## Mixed-Effects Models
 
-**Note:** Mixed-effects models are supported by the MCPower library but are not yet available in the GUI. The information below is included for reference; mixed model support in the app is planned for a future release.
+Mixed-effects models are fully supported in the GUI. When you enter a formula with random effects (e.g., `y ~ x + (1|school)`), the cluster configuration editor appears automatically in the Model tab.
 
 Mixed-effects models handle **clustered data** — observations grouped within higher-level units (e.g., students within schools, patients within hospitals). MCPower supports random intercept models using the formula syntax `y ~ x1 + x2 + (1|cluster_variable)`.
 
@@ -116,7 +116,6 @@ You need roughly 4.8 times more observations than a non-clustered design for the
 ### Design recommendations
 
 - Aim for 20-30 clusters minimum (50+ is ideal).
-- Ensure at least 25 observations per cluster.
-- Ensure at least 10 observations per model parameter per cluster.
+- Ensure at least 5 observations per cluster (10+ recommended).
 - Lower ICC is better for power (ICC < 0.2 is manageable, ICC > 0.4 is challenging).
 - Increasing the number of clusters is generally more effective than increasing cluster size.

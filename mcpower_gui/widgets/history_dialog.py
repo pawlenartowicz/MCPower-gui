@@ -91,7 +91,11 @@ class HistoryDialog(QDialog):
         except (ValueError, TypeError):
             ts_display = ts[:16] if ts else "?"
 
-        title = QLabel(f"<b>{mode_label}</b> — {ts_display}")
+        custom_name = rec.get("custom_name") or ""
+        if custom_name:
+            title = QLabel(f"<b>{custom_name}</b> — {mode_label} — {ts_display}")
+        else:
+            title = QLabel(f"<b>{mode_label}</b> — {ts_display}")
         info.addWidget(title)
 
         formula = rec.get("formula", "")

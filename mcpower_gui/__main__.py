@@ -141,9 +141,14 @@ def main():
     app.setApplicationVersion(__version__)
     app.setDesktopFileName("pl.freestylerscientist.mcpower")
 
+    from mcpower_gui.widgets.spin_boxes import install_wheel_guard
+
+    app._wheel_guard = install_wheel_guard(app)  # prevent GC
+
     from mcpower_gui.theme import apply_font_size, apply_theme
 
     apply_theme()
+    app.processEvents()  # flush deferred font-reset events posted by setStyle("Fusion")
     apply_font_size()
 
     icon_path = Path(__file__).parent / "media" / "icon.png"
