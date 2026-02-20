@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
 
 from mcpower_gui.widgets.spin_boxes import DoubleSpinBox, SpinBox
 
+from mcpower_gui import __version__
 from mcpower_gui.state import SCENARIO_DEFAULTS, ModelState
 from mcpower_gui.theme import (
     ThemeMode,
@@ -100,6 +101,8 @@ class SettingsDialog(QDialog):
 
         general = QGroupBox("General")
         gf = QFormLayout(general)
+
+        gf.addRow("Version:", QLabel(__version__))
 
         self._theme = QComboBox()
         self._theme.addItem("System", ThemeMode.SYSTEM.value)

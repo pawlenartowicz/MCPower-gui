@@ -2,17 +2,24 @@
 """PyInstaller spec for MCPower GUI.
 
 Build on each target OS:
-    # Linux  → produces dist/MCPower  (ELF binary)
+    # Linux   → produces dist/MCPower  (ELF binary)
     # Windows → produces dist/MCPower.exe
+    # macOS   → produces dist/MCPower.app  (app bundle — double-click to open)
     pyinstaller mcpower-gui.spec
 """
 
+import re
 import sys
 from pathlib import Path
 
 from PyInstaller.utils.hooks import copy_metadata
 
 block_cipher = None
+
+# ── Version (read from pyproject.toml — single source of truth) ──
+_pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
+_version_match = re.search(r'^version\s*=\s*"([^"]+)"', _pyproject, re.MULTILINE)
+_version = _version_match.group(1) if _version_match else "0.0.0"
 
 # ── Paths ────────────────────────────────────────────────────────
 pkg_dir = Path("mcpower_gui")
@@ -26,7 +33,7 @@ datas = [
     (str(pkg_dir / "acknowledgments.txt"), "mcpower_gui"),
     (str(pkg_dir / "docs"), "mcpower_gui/docs"),
     (str(pkg_dir / "tips.yaml"), "mcpower_gui"),
-] + copy_metadata("MCPower")
+] + copy_metadata("MCPower") + copy_metadata("mcpower-gui")
 
 # ── Icon (per-OS format) ─────────────────────────────────────────
 if sys.platform == "win32":
@@ -120,3 +127,22 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
 )
+
+# macOS: wrap the EXE in a proper .app bundle so Finder treats it as a GUI app.
+# Without this, macOS opens the bare binary in Terminal instead.
+if sys.platform == "darwin":
+    app = BUNDLE(
+        exe,
+        name="MCPower.app",
+        icon=app_icon,
+        bundle_identifier="pl.freestylerscientist.mcpower",
+        info_plist={
+            "CFBundleName": "MCPower",
+            "CFBundleDisplayName": "MCPower",
+            "CFBundleVersion": _version,
+            "CFBundleShortVersionString": _version,
+            "NSHighResolutionCapable": True,
+            "NSPrincipalClass": "NSApplication",
+            "NSAppleScriptEnabled": False,
+        },
+    )
