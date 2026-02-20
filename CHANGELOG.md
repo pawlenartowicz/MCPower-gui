@@ -2,6 +2,27 @@
 
 All notable changes to MCPower GUI are documented in this file.
 
+## [0.2.2] — 2026-02-20
+
+### Fixed
+
+- **macOS app opens in Terminal** — PyInstaller spec now produces a proper `MCPower.app` bundle (via `BUNDLE` step) so Finder treats it as a GUI application instead of handing it to Terminal
+- **Version shown in Settings** — Settings dialog now displays the current app version (`__version__` imported from `mcpower_gui`)
+- CI build workflow updated for macOS build targets
+
+### Changed
+
+- Build spec reads version from `pyproject.toml` automatically — no longer needs manual update when bumping the version
+- Build spec bundles `mcpower-gui` package metadata so `importlib.metadata.version("mcpower-gui")` works in the frozen app
+- Removed inaccurate note about mixed-effects models support from README
+
+## [0.2.1] — 2026-02-20
+
+### Fixed
+
+- **Tutorial tips missing in frozen app** — `tips.yaml` was not included in the PyInstaller bundle; tips now load correctly in packaged builds
+- **Offscreen crash in CI tests** — Added `tests/conftest.py` with a session-scoped `QApplication` fixture and `QT_QPA_PLATFORM=offscreen` so GUI tests run headlessly without a display
+
 ## [0.2.0] — 2026-02-20
 
 ### Added

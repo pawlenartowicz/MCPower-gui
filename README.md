@@ -24,7 +24,7 @@ MCPower GUI is a desktop application for **Monte Carlo power analysis**. It prov
 |---|---|
 | **Windows** | [MCPower.exe](https://github.com/pawlenartowicz/mcpower-gui/releases/latest/download/MCPower.exe) |
 | **Linux** | [MCPower-linux](https://github.com/pawlenartowicz/mcpower-gui/releases/latest/download/MCPower-linux) |
-| **macOS** | [MCPower-macos](https://github.com/pawlenartowicz/mcpower-gui/releases/latest/download/MCPower-macos) |
+| **macOS** | [MCPower-macos.zip](https://github.com/pawlenartowicz/mcpower-gui/releases/latest/download/MCPower-macos.zip) |
 | **if above do not work** |[SourceForge](https://sourceforge.net/projects/mcpower/)|
 
 No Python installation required — these are standalone executables.
@@ -52,15 +52,19 @@ Your antivirus software may also flag the file. This is a known false positive c
 
 ### macOS
 
-1. Download `MCPower-macos`.
-2. Open Terminal in the download folder:
-   - Open **Finder** → navigate to the Downloads folder → right-click the folder in the sidebar → **Services** → **New Terminal at Folder**
-   - **Or manually:** open Terminal and run `cd ~/Downloads`
-3. Make the file executable:
-   ```bash
-   chmod +x MCPower-macos
-   ```
-4. Run the app: right-click `MCPower-macos` in Finder → **Open** (required on first launch to bypass Gatekeeper, since the app is not signed with an Apple Developer certificate).
+1. Download `MCPower-macos.zip`.
+2. Double-click the `.zip` to unzip it — `MCPower.app` will appear in the same folder.
+3. Drag `MCPower.app` to your **Applications** folder (optional but recommended).
+4. Double-click `MCPower.app` to launch it.
+
+**First launch — Gatekeeper warning:** macOS will block the app with a message like *"MCPower cannot be opened because it is from an unidentified developer."* This happens because the app is not signed with a paid Apple Developer certificate. To allow it:
+
+- Open **System Settings** → **Privacy & Security**
+- Scroll down to the **Security** section
+- You will see a message: *"MCPower was blocked from use because it is not from an identified developer"* — click **Open Anyway**
+- On the next prompt, click **Open**
+
+You only need to do this once. After that, the app opens normally.
 
 Full documentation is available in-app via the **Documentation** menu item.
 
@@ -77,7 +81,7 @@ Traditional power formulas work for simple designs but break down with interacti
 
 ## Why MCPower?
 
-**Just type your formula.** Enter your model the way you'd write it in R or a stats textbook — `outcome = treatment + covariate + treatment*covariate`. MCPower handles everything else: parsing the formula, setting up the simulation, and managing interactions and factor coding. No programming required. More model types (logistic regression, ANOVA) are coming soon.
+**Just type your formula.** Enter your model the way you'd write it in R or a stats textbook — `outcome = treatment + covariate + treatment*covariate`. MCPower handles everything else: parsing the formula, setting up the simulation, and managing interactions and factor coding. No programming required. Logistic regression support is coming soon.
 
 **Scenarios show you the full picture.** Real studies rarely match textbook conditions — effect sizes may be smaller than expected, distributions may be skewed, or variance may not be constant. One checkbox enables automatic robustness testing. MCPower runs your analysis under optimistic, realistic, and worst-case conditions, so instead of a single number you get a range that shows how sensitive your design is to violated assumptions.
 
@@ -98,6 +102,9 @@ MCPower uses R-style formula notation:
 | `y = x1 + x2` | Two main effects |
 | `y = x1 + x2 + x1:x2` | Two main effects + interaction |
 | `y = x1 * x2` | Shorthand for `x1 + x2 + x1:x2` |
+| `y ~ x1 + (1\|group)` | Random intercept (mixed model) |
+| `y ~ x1 + (1 + x1\|group)` | Random intercept + slope (mixed model) |
+
 Both `=` and `~` are accepted as separators between the dependent variable and predictors.
 
 ## Built on
