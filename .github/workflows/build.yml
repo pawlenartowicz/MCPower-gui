@@ -36,7 +36,7 @@ jobs:
         if [ "$RUNNER_OS" = "Linux" ]; then
           mv dist/MCPower dist/MCPower-linux
         else
-          mv dist/MCPower dist/MCPower-macos
+          cd dist && zip -r MCPower-macos.zip MCPower.app && rm -rf MCPower.app
         fi
 
     - name: Upload artifact
