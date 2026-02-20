@@ -35,6 +35,8 @@ Conventional benchmarks (Cohen's guidelines):
 
 Negative effect sizes indicate inverse relationships. The sign affects the direction but not the power (power depends on the magnitude).
 
+For more detail, see the [Effect Sizes](https://github.com/pawlenartowicz/MCPower/wiki/Concept-Effect-Sizes) concept guide.
+
 ## Variable Types and Distributions
 
 ### Continuous
@@ -49,6 +51,8 @@ Categorical variable with 2-20 levels. Internally represented as dummy variables
 When data is uploaded, factor dummies use the **original values** from the data as level names. For example, `cyl` with values [4, 6, 8] produces dummies `cyl[6]` and `cyl[8]`, with `cyl[4]` as the reference. **String columns** are also supported — `origin` with values ["Europe", "Japan", "USA"] produces `origin[Japan]` and `origin[USA]`, with "Europe" as the reference. The default reference level is the first sorted value (alphabetically for strings, numerically for numbers).
 
 Without uploaded data, levels are integer-indexed: a 3-level factor `group` produces dummies `group[2]` and `group[3]`, with level 1 as reference.
+
+For more detail, see the [Variable Types](https://github.com/pawlenartowicz/MCPower/wiki/Concept-Variable-Types) concept guide.
 
 ## Interactions
 
@@ -77,6 +81,8 @@ When testing multiple predictors, the chance of at least one false positive incr
 
 Corrections reduce power for individual tests. If you only care about the overall model test, you may not need a correction.
 
+For more detail, see the [Correlations](https://github.com/pawlenartowicz/MCPower/wiki/Concept-Correlations) concept guide.
+
 ## Scenario Analysis
 
 Scenarios test how robust your power estimates are to violations of statistical assumptions. Three progressively pessimistic scenarios are available:
@@ -87,16 +93,29 @@ Scenarios test how robust your power estimates are to violations of statistical 
 
 Scenario parameters are configured in Settings. Running with scenarios enabled gives you a range of power estimates rather than a single point estimate.
 
+For more detail, see the [Scenario Analysis](https://github.com/pawlenartowicz/MCPower/wiki/Concept-Scenario-Analysis) concept guide.
+
 ## Mixed-Effects Models
 
-Mixed-effects models are fully supported in the GUI. When you enter a formula with random effects (e.g., `y ~ x + (1|school)`), the cluster configuration editor appears automatically in the Model tab.
+Mixed-effects models handle **clustered data** — observations grouped within higher-level units (e.g., students within schools, patients within hospitals). When you enter a formula with random effects, the cluster configuration editor appears automatically in the Model tab.
 
-Mixed-effects models handle **clustered data** — observations grouped within higher-level units (e.g., students within schools, patients within hospitals). MCPower supports random intercept models using the formula syntax `y ~ x1 + x2 + (1|cluster_variable)`.
+MCPower supports three random effect structures:
+
+- **Random intercepts** `(1|group)` — Per-cluster intercept. The simplest and most common structure.
+- **Random slopes** `(1 + x|group)` — Per-cluster intercept and slope. Allows the effect of a predictor to vary across clusters.
+- **Nested effects** `(1|group/subgroup)` — Hierarchical random intercepts at multiple levels (e.g., students in classrooms in schools).
 
 ### Key parameters
 
 - **ICC (Intraclass Correlation Coefficient)** — The proportion of total variance due to differences between clusters. Higher ICC means more clustering, which reduces effective sample size.
 - **Number of clusters** — How many groups. More clusters generally improve power more than larger clusters.
+
+For random slopes, two additional parameters:
+
+- **Slope variance** — How much the predictor's effect varies across clusters.
+- **Slope-intercept correlation** — Whether clusters with higher intercepts also have steeper slopes.
+
+For nested effects, child terms use **N per parent** — the number of sub-groups within each parent group.
 
 ### Design effect
 
@@ -119,3 +138,6 @@ You need roughly 4.8 times more observations than a non-clustered design for the
 - Ensure at least 5 observations per cluster (10+ recommended).
 - Lower ICC is better for power (ICC < 0.2 is manageable, ICC > 0.4 is challenging).
 - Increasing the number of clusters is generally more effective than increasing cluster size.
+- Random slopes and nested models may have higher convergence failure rates — increase the "Max failed sims" setting if needed.
+
+For more detail, see the [Mixed-Effects Models](https://github.com/pawlenartowicz/MCPower/wiki/Concept-Mixed-Effects) concept guide.

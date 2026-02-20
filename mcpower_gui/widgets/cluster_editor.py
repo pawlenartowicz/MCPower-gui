@@ -6,10 +6,8 @@ __all__ = ["ClusterEditor"]
 
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtWidgets import (
-    QDoubleSpinBox,
     QFormLayout,
     QGroupBox,
-    QSpinBox,
     QVBoxLayout,
     QWidget,
 )

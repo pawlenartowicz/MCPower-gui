@@ -194,7 +194,9 @@ class ResultPanel(QWidget):
             # individual_powers_corrected is {} (falsy) when no correction was used.
             powers_corrected = results.get("individual_powers_corrected")
             if powers_corrected:
-                powers = {k: v for k, v in powers_corrected.items() if not math.isnan(v)}
+                powers = {
+                    k: v for k, v in powers_corrected.items() if not math.isnan(v)
+                }
             else:
                 powers = results.get("individual_powers", {})
             if powers:

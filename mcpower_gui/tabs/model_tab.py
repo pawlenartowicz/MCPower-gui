@@ -29,7 +29,11 @@ from mcpower_gui.widgets.anova_factor_editor import AnovaFactorEditor
 from mcpower_gui.widgets.correlation_editor import CorrelationEditor, _corr_key
 from mcpower_gui.widgets.effects_editor import EffectsEditor
 from mcpower_gui.widgets.formula_input import FormulaInput
-from mcpower_gui.widgets.info_button import InfoButton, TitleWidgetPositioner, attach_info_button
+from mcpower_gui.widgets.info_button import (
+    InfoButton,
+    TitleWidgetPositioner,
+    attach_info_button,
+)
 from mcpower_gui.widgets.cluster_editor import ClusterEditor
 from mcpower_gui.widgets.flow_layout import FlowWidget
 from mcpower_gui.widgets.tutorial_guide import TutorialGuide
@@ -119,9 +123,7 @@ class ModelTab(QWidget):
         self._input_mode_group.setToolTip(
             "Choose Linear Formula or ANOVA mode for your model"
         )
-        attach_info_button(
-            self._input_mode_group, "model_tab.md", "Input Mode", "Model Tab"
-        )
+        attach_info_button(self._input_mode_group, "input_mode.md")
 
         self._mode_desc = QLabel("Flexible formula with mixed variable types")
         self._mode_desc.setStyleSheet(
@@ -184,9 +186,7 @@ class ModelTab(QWidget):
         self._data_group.setToolTip(
             "Upload a CSV file to use real data distributions and correlations"
         )
-        attach_info_button(
-            self._data_group, "model_tab.md", "Use Your Data (optional)", "Model Tab"
-        )
+        attach_info_button(self._data_group, "use_your_data.md")
 
         # --- Linear Formula section (parent wrapper) ---
         self._linear_section = QGroupBox("Linear Formula")
@@ -206,7 +206,8 @@ class ModelTab(QWidget):
         self._formula_group.setFont(_fg_bold)
         self.formula_input.setFont(_fg_normal)
         attach_info_button(
-            self._formula_group, "model_tab.md", "Model Formula", "Model Tab",
+            self._formula_group,
+            "model_formula.md",
             title_bold=True,
         )
         self._formula_dot = _attach_readiness_dot(self._formula_group, title_bold=True)
@@ -219,9 +220,7 @@ class ModelTab(QWidget):
         self._types_group.setToolTip(
             "Set each predictor as continuous, binary, or factor"
         )
-        attach_info_button(
-            self._types_group, "model_tab.md", "Variable Types", "Model Tab"
-        )
+        attach_info_button(self._types_group, "variable_types.md")
 
         root.addWidget(self._linear_section)
 
@@ -240,10 +239,13 @@ class ModelTab(QWidget):
         self._anova_group.setFont(_ag_bold)
         self.anova_editor.setFont(_ag_normal)
         attach_info_button(
-            self._anova_group, "model_tab.md", "Variable Types", "Model Tab",
+            self._anova_group,
+            "anova_factors.md",
             title_bold=True,
         )
-        self._anova_formula_dot = _attach_readiness_dot(self._anova_group, title_bold=True)
+        self._anova_formula_dot = _attach_readiness_dot(
+            self._anova_group, title_bold=True
+        )
 
         self._anova_section.hide()
         root.addWidget(self._anova_section)
@@ -273,7 +275,7 @@ class ModelTab(QWidget):
         _text_col.addWidget(self._effects_subtitle)
         _eh_layout.addLayout(_text_col)
 
-        _effects_info_btn = InfoButton("model_tab.md", "Effect Sizes", "Model Tab")
+        _effects_info_btn = InfoButton("effect_sizes.md")
         self._effects_dot = QLabel("○")
         self._effects_dot.setFixedSize(20, 20)
         self._effects_dot.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -285,7 +287,9 @@ class ModelTab(QWidget):
         self.effects_editor = EffectsEditor()
         eg_layout.addWidget(self.effects_editor)
         root.addWidget(self._effects_group)
-        self._effects_group.setToolTip("Standardized effect sizes (betas) for each predictor")
+        self._effects_group.setToolTip(
+            "Standardized effect sizes (betas) for each predictor"
+        )
 
         # --- Cluster Configuration (for mixed models, hidden by default) ---
         self._cluster_group = QGroupBox("Cluster Configuration")
@@ -297,9 +301,7 @@ class ModelTab(QWidget):
         self._cluster_group.setToolTip(
             "Configure ICC and cluster counts for mixed models"
         )
-        attach_info_button(
-            self._cluster_group, "model_tab.md", "Cluster Configuration", "Model Tab"
-        )
+        attach_info_button(self._cluster_group, "cluster_config.md")
 
         # --- Correlations (collapsible, hidden in ANOVA mode) ---
         self._corr_group = QGroupBox("Correlations (optional)")
@@ -314,9 +316,7 @@ class ModelTab(QWidget):
         self._corr_group.setToolTip(
             "Pairwise correlations between continuous/binary predictors"
         )
-        attach_info_button(
-            self._corr_group, "model_tab.md", "Correlations (optional)", "Model Tab"
-        )
+        attach_info_button(self._corr_group, "correlations.md")
 
         root.addStretch()
         self._scroll.setWidget(content)
@@ -417,9 +417,11 @@ class ModelTab(QWidget):
         """Rebuild the row of clickable variable buttons from uploaded data."""
         # Clear existing buttons (setParent(None) detaches immediately;
         # deleteLater alone would leave ghosts visible to findChildren)
-        for child in list(self._var_buttons_container.findChildren(
-            QPushButton, options=Qt.FindChildOption.FindDirectChildrenOnly
-        )):
+        for child in list(
+            self._var_buttons_container.findChildren(
+                QPushButton, options=Qt.FindChildOption.FindDirectChildrenOnly
+            )
+        ):
             child.setParent(None)
             child.deleteLater()
 
@@ -451,7 +453,9 @@ class ModelTab(QWidget):
                 "  background: palette(midlight);"
                 "}"
             )
-            btn.clicked.connect(lambda checked=False, n=name: self._on_var_button_clicked(n))
+            btn.clicked.connect(
+                lambda checked=False, n=name: self._on_var_button_clicked(n)
+            )
             btn.show()
 
         self._var_buttons_container.show()
@@ -482,7 +486,9 @@ class ModelTab(QWidget):
         n_levels = len(unique_vals)
         counts = Counter(_format_level_label(v) for v in values)
         total = sum(counts.values())
-        proportions = [round(counts[label] / total, 4) for label in sorted(counts.keys())]
+        proportions = [
+            round(counts[label] / total, 4) for label in sorted(counts.keys())
+        ]
 
         factor_def = {
             "name": name,

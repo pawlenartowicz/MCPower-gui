@@ -1,6 +1,6 @@
 # MCPower GUI
 
-MCPower GUI is a desktop application for **Monte Carlo power analysis**. It provides a graphical interface to the [MCPower](https://github.com/freestylerscientist/MCPower) library, letting you plan sample sizes and estimate statistical power for complex study designs — without writing any code.
+MCPower GUI is a desktop application for **Monte Carlo power analysis**. It provides a graphical interface to the [MCPower](https://github.com/pawlenartowicz/MCPower) library, letting you plan sample sizes and estimate statistical power for complex study designs — without writing any code.
 
 ## What is power analysis?
 
@@ -31,3 +31,7 @@ MCPower uses R-style formula notation:
 Both `=` and `~` are accepted as separators between the dependent variable and predictors.
 
 **Mixed-effects models** are also supported. Use the syntax `y ~ x + (1|school)` to include random effects. When a mixed-model formula is entered, a cluster configuration editor appears automatically where you can set ICC, number of clusters, and other parameters.
+
+## Citation
+
+If you use MCPower in your research, please cite it. See the Citation page in this documentation for full details and BibTeX entry.

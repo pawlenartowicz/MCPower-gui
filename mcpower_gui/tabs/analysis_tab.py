@@ -4,7 +4,6 @@ from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
-    QDoubleSpinBox,
     QFormLayout,
     QGroupBox,
     QLabel,
@@ -12,7 +11,6 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QScrollArea,
-    QSpinBox,
     QVBoxLayout,
     QWidget,
 )
@@ -84,9 +82,7 @@ class AnalysisTab(QWidget):
         cf.addRow(self._test_formula_label, self._test_formula)
 
         root.addWidget(common_group)
-        attach_info_button(
-            common_group, "analysis_tab.md", "Common Analysis Settings", "Analysis Tab"
-        )
+        attach_info_button(common_group, "common_settings.md")
 
         # ── Post Hoc Pairwise Comparisons ─────────────────────
         self._post_hoc_group = QGroupBox("Post Hoc Pairwise Comparisons")
@@ -95,12 +91,7 @@ class AnalysisTab(QWidget):
         ph_layout.addWidget(self._post_hoc_selector)
         self._post_hoc_group.hide()
         root.addWidget(self._post_hoc_group)
-        attach_info_button(
-            self._post_hoc_group,
-            "analysis_tab.md",
-            "Post Hoc Pairwise Comparisons",
-            "Analysis Tab",
-        )
+        attach_info_button(self._post_hoc_group, "post_hoc.md")
 
         # ── Find Power ───────────────────────────────────────
         power_group = QGroupBox("Find Power")
@@ -117,7 +108,7 @@ class AnalysisTab(QWidget):
         pf.addRow(self._btn_power)
 
         root.addWidget(power_group)
-        attach_info_button(power_group, "analysis_tab.md", "Find Power", "Analysis Tab")
+        attach_info_button(power_group, "find_power.md")
 
         # ── Find Sample Size ─────────────────────────────────
         ss_group = QGroupBox("Find Sample Size")
@@ -145,9 +136,7 @@ class AnalysisTab(QWidget):
         sf.addRow(self._btn_ss)
 
         root.addWidget(ss_group)
-        attach_info_button(
-            ss_group, "analysis_tab.md", "Find Sample Size", "Analysis Tab"
-        )
+        attach_info_button(ss_group, "find_sample_size.md")
 
         root.addStretch()
         scroll.setWidget(content)

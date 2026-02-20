@@ -59,7 +59,7 @@ class TutorialGuide(QWidget):
             self._dismissed = True
 
         self._layout = QVBoxLayout(self)
-        self._layout.setContentsMargins(8, 6, 8, 6)
+        self._layout.setContentsMargins(8, 2, 8, 6)
         self._layout.setSpacing(2)
 
         # State cache for rebuild
@@ -230,7 +230,9 @@ class TutorialGuide(QWidget):
                 f"QPushButton:hover {{ background: rgba(128,128,128,0.15); border-radius: 3px; }}"
             )
             btn.clicked.connect(
-                lambda _, f=formula, t=types_hint: self.formula_example_requested.emit(f, t)
+                lambda _, f=formula, t=types_hint: self.formula_example_requested.emit(
+                    f, t
+                )
             )
             h.addWidget(btn)
         h.addStretch()
@@ -244,8 +246,8 @@ class TutorialGuide(QWidget):
         h.setContentsMargins(0, 0, 0, 0)
         h.addStretch()
         btn = QPushButton("\u00d7")
-        btn.setFixedSize(40, 40)
-        btn.setStyleSheet("font-size: 20px;")
+        btn.setFixedSize(20, 20)
+        btn.setStyleSheet("font-size: 14px;")
         btn.setFlat(True)
         btn.setToolTip("Dismiss guide for this session")
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -258,7 +260,7 @@ class TutorialGuide(QWidget):
         colors = current_colors()
         border = colors["border"]
         self.setStyleSheet(
-            f"TutorialGuide {{ background: rgba(128,128,128,0.06); "
+            f"TutorialGuide {{ background: rgba(128,128,128,0.12); "
             f"border: 1px solid {border}; border-radius: 6px; }}"
         )
 

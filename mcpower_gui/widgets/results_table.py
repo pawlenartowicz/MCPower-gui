@@ -52,7 +52,9 @@ class ResultsTable(QWidget):
             )
         else:
             self._table.setColumnCount(3)
-            self._table.setHorizontalHeaderLabels(["Tested Variable", "Power (%)", "Achieved"])
+            self._table.setHorizontalHeaderLabels(
+                ["Tested Variable", "Power (%)", "Achieved"]
+            )
 
         self._table.setRowCount(len(powers))
 

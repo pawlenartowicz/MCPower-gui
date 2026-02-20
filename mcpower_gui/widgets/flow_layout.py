@@ -16,7 +16,9 @@ class FlowWidget(QWidget):
     ``reflow()`` after adding/removing children.
     """
 
-    def __init__(self, parent: QWidget | None = None, h_spacing: int = 6, v_spacing: int = 6):
+    def __init__(
+        self, parent: QWidget | None = None, h_spacing: int = 6, v_spacing: int = 6
+    ):
         super().__init__(parent)
         self._h_spacing = h_spacing
         self._v_spacing = v_spacing
@@ -35,7 +37,8 @@ class FlowWidget(QWidget):
     def _layout_children(self, width: int) -> int:
         """Position children left-to-right with wrapping. Returns total height."""
         children = [
-            c for c in self.findChildren(
+            c
+            for c in self.findChildren(
                 QWidget, options=Qt.FindChildOption.FindDirectChildrenOnly
             )
             if c.isVisible()
@@ -72,7 +75,8 @@ class FlowWidget(QWidget):
     def _layout_children_dry(self, width: int) -> int:
         """Calculate height without moving children."""
         children = [
-            c for c in self.findChildren(
+            c
+            for c in self.findChildren(
                 QWidget, options=Qt.FindChildOption.FindDirectChildrenOnly
             )
             if c.isVisible()

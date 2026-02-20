@@ -1,4 +1,4 @@
-# Results Tab
+# Understanding Results
 
 Each completed analysis creates a new closeable subtab in the Results tab. Subtabs are labeled with the mode (FP = Find Power, FSS = Find Sample Size) and the time of creation. Elapsed time is shown after one minute.
 

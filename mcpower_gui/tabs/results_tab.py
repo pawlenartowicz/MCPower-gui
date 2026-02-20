@@ -34,7 +34,9 @@ class ResultsTab(QWidget):
         super().__init__(parent)
         self._history_manager = history_manager
         self._tab_record_ids: dict[int, str] = {}  # id(widget) → record_id
-        self._tab_base_names: dict[int, str] = {}  # id(widget) → base tab name (no suffix)
+        self._tab_base_names: dict[
+            int, str
+        ] = {}  # id(widget) → base tab name (no suffix)
 
         self._stack = QStackedLayout(self)
 

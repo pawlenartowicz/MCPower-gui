@@ -164,7 +164,9 @@ class ModelState:
             "factor_level_labels": {
                 k: list(v) for k, v in self.factor_level_labels.items()
             },
-            "uploaded_columns": list(self.uploaded_data.keys()) if self.uploaded_data else [],
+            "uploaded_columns": list(self.uploaded_data.keys())
+            if self.uploaded_data
+            else [],
             "n_simulations": self.n_simulations,
             "n_simulations_mixed_model": self.n_simulations_mixed_model,
             "alpha": self.alpha,

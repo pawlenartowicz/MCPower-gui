@@ -9,7 +9,6 @@ from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
     QDialogButtonBox,
-    QDoubleSpinBox,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
@@ -17,7 +16,6 @@ from PySide6.QtWidgets import (
     QListWidget,
     QPushButton,
     QScrollArea,
-    QSpinBox,
     QStackedWidget,
     QVBoxLayout,
     QWidget,
@@ -223,7 +221,7 @@ class SettingsDialog(QDialog):
         )
 
         page_layout.addWidget(general)
-        attach_info_button(general, "settings.md", "General", "Settings")
+        attach_info_button(general, "general_settings.md")
         page_layout.addStretch()
 
         scroll.setWidget(page)
@@ -264,7 +262,11 @@ class SettingsDialog(QDialog):
     }
 
     _DIST_OPTIONS = ["normal", "heavy_tailed", "skewed"]
-    _DIST_ITEMS = [("normal", "Normal"), ("heavy_tailed", "Heavy tailed"), ("skewed", "Skewed")]
+    _DIST_ITEMS = [
+        ("normal", "Normal"),
+        ("heavy_tailed", "Heavy tailed"),
+        ("skewed", "Skewed"),
+    ]
 
     def _build_scenario_group(
         self, title: str, cfg: dict, defaults: dict
@@ -303,7 +305,9 @@ class SettingsDialog(QDialog):
         re_dist_combo = QComboBox()
         for val, lbl in self._DIST_ITEMS:
             re_dist_combo.addItem(lbl, val)
-        re_val = cfg.get("random_effect_dist", defaults.get("random_effect_dist", "normal"))
+        re_val = cfg.get(
+            "random_effect_dist", defaults.get("random_effect_dist", "normal")
+        )
         re_dist_combo.setCurrentIndex(
             self._DIST_OPTIONS.index(re_val) if re_val in self._DIST_OPTIONS else 0
         )
@@ -313,7 +317,9 @@ class SettingsDialog(QDialog):
         # random_effect_df
         re_df_spin = SpinBox()
         re_df_spin.setRange(2, 50)
-        re_df_spin.setValue(cfg.get("random_effect_df", defaults.get("random_effect_df", 5)))
+        re_df_spin.setValue(
+            cfg.get("random_effect_df", defaults.get("random_effect_df", 5))
+        )
         form.addRow("Random effect df:", re_df_spin)
         spins["random_effect_df"] = re_df_spin
 
@@ -333,7 +339,9 @@ class SettingsDialog(QDialog):
         res_prob_spin.setRange(0.0, 1.0)
         res_prob_spin.setSingleStep(0.05)
         res_prob_spin.setDecimals(2)
-        res_prob_spin.setValue(cfg.get("residual_change_prob", defaults.get("residual_change_prob", 0.0)))
+        res_prob_spin.setValue(
+            cfg.get("residual_change_prob", defaults.get("residual_change_prob", 0.0))
+        )
         form.addRow("Residual change prob:", res_prob_spin)
         spins["residual_change_prob"] = res_prob_spin
 
@@ -344,7 +352,7 @@ class SettingsDialog(QDialog):
         form.addRow("Residual df:", res_df_spin)
         spins["residual_df"] = res_df_spin
 
-        attach_info_button(group, "settings.md", "Scenario Parameters", "Settings")
+        attach_info_button(group, "scenario_settings.md")
         return group, spins, combos
 
     def _on_reopen_tips(self):
@@ -379,9 +387,14 @@ class SettingsDialog(QDialog):
         s.n_cores = self._n_cores.value() if cores_data == "custom" else cores_data
         s.scenario_configs = {}
         for name in self._scenario_spins:
-            cfg = {key: spin.value() for key, spin in self._scenario_spins[name].items()}
+            cfg = {
+                key: spin.value() for key, spin in self._scenario_spins[name].items()
+            }
             cfg.update(
-                {key: combo.currentData() for key, combo in self._scenario_combos[name].items()}
+                {
+                    key: combo.currentData()
+                    for key, combo in self._scenario_combos[name].items()
+                }
             )
             s.scenario_configs[name] = cfg
         mode = ThemeMode(self._theme.currentData())

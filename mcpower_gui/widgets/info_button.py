@@ -17,48 +17,25 @@ from PySide6.QtWidgets import (
 from mcpower_gui._resources import resource_path
 
 
-def extract_doc_section(doc_file: str, section_heading: str) -> str:
-    """Extract a ``## section_heading`` block from a docs markdown file.
-
-    Returns everything from the heading line to the next ``## `` heading
-    (or EOF), inclusive of the heading itself.
-    """
+def _load_doc_file(doc_file: str) -> str:
+    """Load the full contents of a docs markdown file."""
     path = resource_path("docs", doc_file)
-    text = path.read_text(encoding="utf-8")
-    lines = text.split("\n")
-
-    target = f"## {section_heading}"
-    start_idx: int | None = None
-    for i, line in enumerate(lines):
-        if line.strip() == target:
-            start_idx = i
-            break
-
-    if start_idx is None:
-        return f"*Documentation section '{section_heading}' not found.*"
-
-    end_idx = len(lines)
-    for i in range(start_idx + 1, len(lines)):
-        if lines[i].startswith("## "):
-            end_idx = i
-            break
-
-    return "\n".join(lines[start_idx:end_idx]).strip()
+    return path.read_text(encoding="utf-8")
 
 
 class InfoPopup(QFrame):
-    """Frameless popup showing a rendered markdown section."""
+    """Frameless popup showing a rendered markdown page."""
 
     _POPUP_WIDTH = 480
 
     def __init__(
         self,
         markdown_text: str,
-        doc_page_name: str,
+        doc_file: str,
         parent: QWidget | None = None,
     ):
         super().__init__(parent, Qt.WindowType.Popup)
-        self._doc_page_name = doc_page_name
+        self._doc_file = doc_file
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
@@ -103,24 +80,20 @@ class InfoPopup(QFrame):
         top = self.parent()
         while top is not None and top.parent() is not None:
             top = top.parent()
-        dlg = DocumentationDialog(top, initial_page=self._doc_page_name)
+        dlg = DocumentationDialog(top, initial_page=self._doc_file)
         dlg.exec()
 
 
 class InfoButton(QPushButton):
-    """Small circular (i) button that shows a documentation popup on click."""
+    """Small circular (?) button that shows a documentation popup on click."""
 
     def __init__(
         self,
         doc_file: str,
-        section_heading: str,
-        doc_page_name: str,
         parent: QWidget | None = None,
     ):
         super().__init__("?", parent)
         self._doc_file = doc_file
-        self._section_heading = section_heading
-        self._doc_page_name = doc_page_name
 
         self.setFixedSize(20, 20)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -144,8 +117,8 @@ class InfoButton(QPushButton):
         self.clicked.connect(self._show_popup)
 
     def _show_popup(self):
-        text = extract_doc_section(self._doc_file, self._section_heading)
-        popup = InfoPopup(text, self._doc_page_name, parent=self)
+        text = _load_doc_file(self._doc_file)
+        popup = InfoPopup(text, self._doc_file, parent=self)
         pos = self.mapToGlobal(QPoint(0, self.height() + 4))
 
         screen = self.screen()
@@ -209,15 +182,13 @@ class TitleWidgetPositioner(QObject):
 def attach_info_button(
     group_box: QGroupBox,
     doc_file: str,
-    section_heading: str,
-    doc_page_name: str,
     title_bold: bool = False,
 ) -> InfoButton:
-    """Attach an (i) info button next to a QGroupBox title.
+    """Attach a (?) info button next to a QGroupBox title.
 
     The button is positioned automatically via an event filter.
     Returns the created InfoButton.
     """
-    btn = InfoButton(doc_file, section_heading, doc_page_name)
+    btn = InfoButton(doc_file)
     TitleWidgetPositioner(group_box, btn, x_offset=22, title_bold=title_bold)
     return btn

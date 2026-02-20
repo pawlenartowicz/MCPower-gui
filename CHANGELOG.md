@@ -2,6 +2,19 @@
 
 All notable changes to MCPower GUI are documented in this file.
 
+## [0.2.3] — 2026-02-20
+
+### Changed
+
+- **Documentation system overhaul** — Split monolithic doc files (model_tab.md, analysis_tab.md, results_tab.md, settings.md) into ~20 per-section pages. Each info button now opens the full topic page instead of extracting a section at runtime
+- **Documentation dialog redesign** — Sidebar now groups pages under section headers (Overview, Model, Analysis, Results, Other) with indented child pages and a custom styled delegate
+- **Simplified InfoButton API** — Removed `extract_doc_section()` and section-heading-based extraction; `InfoButton` and `attach_info_button` take only a doc filename
+- Expanded Key Concepts with wiki links, random slopes, and nested effects documentation
+- New doc pages: Data Preparation, Mixed Models Guide, Citation
+- Fixed GitHub URL in overview (`freestylerscientist` → `pawlenartowicz`)
+- Tutorial guide: smaller dismiss button, more visible background
+- Bumped MCPower dependency to 0.5.2
+
 ## [0.2.2] — 2026-02-20
 
 ### Fixed
