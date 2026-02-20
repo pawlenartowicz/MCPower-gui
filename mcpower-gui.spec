@@ -25,6 +25,7 @@ datas = [
     (str(pkg_dir / "pl.freestylerscientist.mcpower.desktop"), "mcpower_gui"),
     (str(pkg_dir / "acknowledgments.txt"), "mcpower_gui"),
     (str(pkg_dir / "docs"), "mcpower_gui/docs"),
+    (str(pkg_dir / "tips.yaml"), "mcpower_gui"),
 ] + copy_metadata("MCPower")
 
 # ── Icon (per-OS format) ─────────────────────────────────────────
