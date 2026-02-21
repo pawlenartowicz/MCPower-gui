@@ -118,10 +118,13 @@ class EffectsEditor(QWidget):
             w = fm.horizontalAdvance(name) + 12
             if w > label_width:
                 label_width = w
-            # Account for reference level labels too
-            if self._predictor_types.get(
-                name
-            ) == "factor" and _is_first_level_of_factor(name, predictors):
+            # Account for reference level labels too (main effects only, not interactions)
+            is_interaction = ":" in name
+            if (
+                not is_interaction
+                and self._predictor_types.get(name) == "factor"
+                and _is_first_level_of_factor(name, predictors)
+            ):
                 base = _FACTOR_LEVEL_RE.sub("", name).rstrip(":")
                 ref_label = (factor_refs or {}).get(base)
                 ref_text = _reference_label(name, ref_label)
@@ -133,9 +136,13 @@ class EffectsEditor(QWidget):
 
         for name in predictors:
             # Insert reference level placeholder before the first dummy
-            if self._predictor_types.get(
-                name
-            ) == "factor" and _is_first_level_of_factor(name, predictors):
+            # (main effects only — interactions don't get reference rows)
+            is_interaction = ":" in name
+            if (
+                not is_interaction
+                and self._predictor_types.get(name) == "factor"
+                and _is_first_level_of_factor(name, predictors)
+            ):
                 base = _FACTOR_LEVEL_RE.sub("", name).rstrip(":")
                 ref_label = (factor_refs or {}).get(base)
                 ref_row = self._make_reference_row(_reference_label(name, ref_label))

@@ -2,6 +2,18 @@
 
 All notable changes to MCPower GUI are documented in this file.
 
+## [0.2.4] — 2026-02-21
+
+### Fixed
+
+- **Factor:factor interaction expansion** — `_expand_predictors()` now produces Cartesian product of non-reference dummy levels (e.g. `a[2]:b[2]`, `a[3]:b[2]`) instead of incorrect partial expansion (`a:b[2]`, `a[2]:b`). Applies to both Linear formula and ANOVA modes
+- Factor:factor interactions with named level labels now expand correctly (e.g. `origin[Japan]:cyl[6]` instead of `origin:cyl[6]`)
+- Reference level placeholder rows no longer appear for interaction terms in the effects editor — only main effects show the disabled `(ref)` row
+
+### Changed
+
+- Bumped MCPower dependency to 0.5.3
+
 ## [0.2.3] — 2026-02-20
 
 ### Changed

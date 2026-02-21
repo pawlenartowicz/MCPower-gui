@@ -194,7 +194,7 @@
 # --- Effect sizes info (always visible when model has effects) ---
 - id: effect_sizes_info
   tab: model
-  text: "   Effect sizes: S=0.1, M=0.3, L=0.5 (Cohen\u2019s conventions) \u2014 adjust anytime"
+  text: "   S / M / L buttons apply Cohen\u2019s conventions of effect sizes for each variable type \u2014 adjust anytime"
   style: optional
   priority: 430
   conditions:
@@ -302,7 +302,7 @@
 
 - id: data_effect_sizes_info
   tab: model
-  text: "   Effect sizes are standardized betas: S=0.1, M=0.3, L=0.5 (Cohen\u2019s conventions)"
+  text: "   Effect sizes are standardized betas \u2014 S / M / L buttons apply Cohen\u2019s conventions of effect sizes for each variable type"
   style: optional
   priority: 110
   conditions:

@@ -874,44 +874,45 @@ class ModelTab(QWidget):
         (first label is reference). Otherwise falls back to integer indices:
         "x[2]", "x[3]" (level 1 is reference).
 
-        For interactions, MCPower expands one factor at a time while keeping
-        other components as the base name.
+        For interactions involving factors, expands to the Cartesian product
+        of non-reference dummy levels across all factor components.
+        E.g. factor1(3 levels):factor2(2 levels) → factor1[2]:factor2[2],
+        factor1[3]:factor2[2].
         """
+        from itertools import product as cartesian_product
+
         expanded = []
         pred_types: dict[str, str] = {}
         for name in predictors:
             if ":" in name:
                 components = name.split(":")
-                factor_indices = []
-                for idx, comp in enumerate(components):
+                has_factor = False
+                level_options: list[list[str]] = []
+                for comp in components:
                     info = types.get(comp, {})
                     if info.get("type") == "factor":
-                        factor_indices.append(idx)
-                if factor_indices:
-                    for fi in factor_indices:
-                        comp = components[fi]
-                        info = types.get(comp, {})
+                        has_factor = True
                         level_labels = info.get("level_labels")
                         if level_labels:
                             reference = level_labels[0]
-                            for label in level_labels:
-                                if label != reference:
-                                    parts = list(components)
-                                    parts[fi] = f"{comp}[{label}]"
-                                    interaction_name = ":".join(parts)
-                                    expanded.append(interaction_name)
-                                    pred_types[interaction_name] = "factor"
+                            non_ref = [
+                                f"{comp}[{label}]"
+                                for label in level_labels
+                                if label != reference
+                            ]
                         else:
                             n_levels = info.get("n_levels", 3)
-                            for lvl in range(2, n_levels + 1):
-                                parts = list(components)
-                                parts[fi] = f"{comp}[{lvl}]"
-                                interaction_name = ":".join(parts)
-                                expanded.append(interaction_name)
-                                pred_types[interaction_name] = "factor"
-                else:
-                    expanded.append(name)
-                    pred_types[name] = "continuous"
+                            non_ref = [
+                                f"{comp}[{lvl}]" for lvl in range(2, n_levels + 1)
+                            ]
+                        level_options.append(non_ref)
+                    else:
+                        level_options.append([comp])
+                itype = "factor" if has_factor else "continuous"
+                for combo in cartesian_product(*level_options):
+                    interaction_name = ":".join(combo)
+                    expanded.append(interaction_name)
+                    pred_types[interaction_name] = itype
                 continue
             info = types.get(name, {})
             vtype = info.get("type", "continuous")

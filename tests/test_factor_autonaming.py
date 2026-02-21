@@ -167,6 +167,59 @@ class TestExpandPredictorsWithLabels:
         assert "origin[Japan]:hp" in expanded
         assert "origin[USA]:hp" in expanded
 
+    def test_factor_factor_interaction_cartesian_product(self):
+        """Two factors produce Cartesian product of non-reference levels."""
+        state = ModelState()
+        tab = ModelTab(state)
+        types = {
+            "a": {"type": "factor", "n_levels": 3},
+            "b": {"type": "factor", "n_levels": 2},
+        }
+        expanded, pred_types = tab._expand_predictors(["a:b"], types)
+        # (3-1) * (2-1) = 2 interaction terms
+        assert expanded == ["a[2]:b[2]", "a[3]:b[2]"]
+        assert all(pred_types[n] == "factor" for n in expanded)
+
+    def test_factor_factor_interaction_with_labels(self):
+        """Factor:factor with level_labels uses label names."""
+        state = ModelState()
+        tab = ModelTab(state)
+        types = {
+            "origin": {
+                "type": "factor",
+                "n_levels": 3,
+                "level_labels": ["Europe", "Japan", "USA"],
+            },
+            "cyl": {
+                "type": "factor",
+                "n_levels": 3,
+                "level_labels": ["4", "6", "8"],
+            },
+        }
+        expanded, _ = tab._expand_predictors(["origin:cyl"], types)
+        expected = [
+            "origin[Japan]:cyl[6]",
+            "origin[Japan]:cyl[8]",
+            "origin[USA]:cyl[6]",
+            "origin[USA]:cyl[8]",
+        ]
+        assert expanded == expected
+
+    def test_factor_factor_no_reference_level_terms(self):
+        """No terms like factor1:factor2[2] or factor1[2]:factor2 should appear."""
+        state = ModelState()
+        tab = ModelTab(state)
+        types = {
+            "a": {"type": "factor", "n_levels": 3},
+            "b": {"type": "factor", "n_levels": 2},
+        }
+        expanded, _ = tab._expand_predictors(["a:b"], types)
+        for name in expanded:
+            parts = name.split(":")
+            # Every part must have a [level] suffix
+            for part in parts:
+                assert "[" in part, f"Missing level in interaction component: {part}"
+
 
 class TestRebuildEffectsFactorRefs:
     """Test that _rebuild_effects derives factor_refs in linear mode."""
