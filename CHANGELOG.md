@@ -2,6 +2,22 @@
 
 All notable changes to MCPower GUI are documented in this file.
 
+## [0.2.5] — 2026-02-22
+
+### Changed
+
+- **Platform-specific update downloads** — Update checker now links directly to the platform-specific binary (`.exe` on Windows, `.zip` on macOS, `-linux` on Linux) instead of the generic release page
+- **Cross-platform history storage** — History directory now uses `QStandardPaths.AppDataLocation` for proper cross-platform paths (`~/Library/Application Support/MCPower/history/` on macOS, `%APPDATA%/MCPower/history/` on Windows, `~/.local/share/MCPower/history/` on Linux) instead of hardcoded `~/.local/share/mcpower-gui/history/`
+- `HistoryManager` now requires an explicit `history_dir` parameter (no hidden default path)
+- Added `packaging` as an explicit dependency (was only available transitively)
+- Smoke test now sets `applicationName` for consistent `QStandardPaths` resolution
+- README: added LME validation link (95 scenarios, 100% pass rate against R's lme4)
+- Bumped MCPower dependency to 0.5.4
+
+### Added
+
+- Tests for platform-specific asset matching in update checker
+
 ## [0.2.4] — 2026-02-21
 
 ### Fixed

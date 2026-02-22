@@ -13,12 +13,11 @@ _MAX_ENTRIES = 25
 class HistoryManager:
     """Manages analysis history as individual JSON files.
 
-    Default storage: ``~/.local/share/mcpower-gui/history/``
+    The caller is expected to supply a *history_dir* path (typically via
+    ``QStandardPaths.AppDataLocation`` for cross-platform support).
     """
 
-    def __init__(self, history_dir: Path | None = None):
-        if history_dir is None:
-            history_dir = Path.home() / ".local" / "share" / "mcpower-gui" / "history"
+    def __init__(self, history_dir: Path):
         self._dir = Path(history_dir)
         self._dir.mkdir(parents=True, exist_ok=True)
 

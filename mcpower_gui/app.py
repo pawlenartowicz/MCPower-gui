@@ -1,8 +1,9 @@
 """Main application window — tab container, signal routing, worker lifecycle."""
 
 import os
+from pathlib import Path
 
-from PySide6.QtCore import QTimer, QUrl
+from PySide6.QtCore import QStandardPaths, QTimer, QUrl
 from PySide6.QtGui import QAction, QDesktopServices
 from PySide6.QtWidgets import (
     QMainWindow,
@@ -38,7 +39,10 @@ class MainWindow(QMainWindow):
 
         self._state = ModelState()
         self._worker: AnalysisWorker | None = None
-        self._history = HistoryManager()
+        history_dir = Path(
+            QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
+        ) / "history"
+        self._history = HistoryManager(history_dir=history_dir)
 
         # Menu bar
         settings_action = QAction("Settings", self)

@@ -3,7 +3,7 @@
 import json
 from unittest.mock import MagicMock, patch
 
-from mcpower_gui.update_checker import check_for_update
+from mcpower_gui.update_checker import _find_platform_asset, check_for_update
 
 
 def _mock_response(body: bytes):
@@ -91,3 +91,84 @@ class TestCheckForUpdate:
 
         with patch("urllib.request.urlopen", return_value=_mock_response(body)):
             assert check_for_update("0.1.1rc0") is None
+
+    def test_platform_asset_preferred_over_html_url(self):
+        body = json.dumps(
+            {
+                "tag_name": "v1.0.0",
+                "html_url": "https://github.com/pawlenartowicz/mcpower-gui/releases/tag/v1.0.0",
+                "assets": [
+                    {
+                        "name": "MCPower-linux",
+                        "browser_download_url": "https://github.com/dl/MCPower-linux",
+                    },
+                ],
+            }
+        ).encode()
+
+        with patch("urllib.request.urlopen", return_value=_mock_response(body)):
+            with patch("mcpower_gui.update_checker.sys") as mock_sys:
+                mock_sys.platform = "linux"
+                result = check_for_update("0.1.0")
+
+        assert result is not None
+        assert result[1] == "https://github.com/dl/MCPower-linux"
+
+    def test_no_matching_asset_falls_back_to_html_url(self):
+        body = json.dumps(
+            {
+                "tag_name": "v1.0.0",
+                "html_url": "https://github.com/pawlenartowicz/mcpower-gui/releases/tag/v1.0.0",
+                "assets": [
+                    {
+                        "name": "MCPower.exe",
+                        "browser_download_url": "https://github.com/dl/MCPower.exe",
+                    },
+                ],
+            }
+        ).encode()
+
+        with patch("urllib.request.urlopen", return_value=_mock_response(body)):
+            with patch("mcpower_gui.update_checker.sys") as mock_sys:
+                mock_sys.platform = "linux"
+                result = check_for_update("0.1.0")
+
+        assert result is not None
+        assert "releases/tag/v1.0.0" in result[1]
+
+
+class TestFindPlatformAsset:
+    def test_linux_asset(self):
+        assets = [{"name": "MCPower-linux", "browser_download_url": "https://dl/linux"}]
+        with patch("mcpower_gui.update_checker.sys") as mock_sys:
+            mock_sys.platform = "linux"
+            assert _find_platform_asset(assets) == "https://dl/linux"
+
+    def test_windows_asset(self):
+        assets = [{"name": "MCPower.exe", "browser_download_url": "https://dl/win"}]
+        with patch("mcpower_gui.update_checker.sys") as mock_sys:
+            mock_sys.platform = "win32"
+            assert _find_platform_asset(assets) == "https://dl/win"
+
+    def test_macos_asset(self):
+        assets = [{"name": "MCPower-macos.zip", "browser_download_url": "https://dl/mac"}]
+        with patch("mcpower_gui.update_checker.sys") as mock_sys:
+            mock_sys.platform = "darwin"
+            assert _find_platform_asset(assets) == "https://dl/mac"
+
+    def test_case_insensitive(self):
+        assets = [{"name": "MCPOWER-LINUX", "browser_download_url": "https://dl/linux"}]
+        with patch("mcpower_gui.update_checker.sys") as mock_sys:
+            mock_sys.platform = "linux"
+            assert _find_platform_asset(assets) == "https://dl/linux"
+
+    def test_unknown_platform(self):
+        assets = [{"name": "MCPower-linux", "browser_download_url": "https://dl/linux"}]
+        with patch("mcpower_gui.update_checker.sys") as mock_sys:
+            mock_sys.platform = "freebsd"
+            assert _find_platform_asset(assets) is None
+
+    def test_empty_assets(self):
+        with patch("mcpower_gui.update_checker.sys") as mock_sys:
+            mock_sys.platform = "linux"
+            assert _find_platform_asset([]) is None

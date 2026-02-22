@@ -71,6 +71,7 @@ def _smoke_test() -> None:
     app = QApplication.instance() or QApplication(sys.argv)
     if app is None:
         errors.append("QApplication creation failed")
+    app.setApplicationName("MCPower")
 
     from mcpower_gui.theme import apply_font_size, apply_theme
 
