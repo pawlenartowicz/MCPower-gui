@@ -87,6 +87,33 @@ Traditional power formulas work for simple designs but break down with interacti
 
 **Upload your data, skip the guesswork.** Drop in a CSV and MCPower auto-detects variable types (continuous, binary, or categorical), preserves real distributions, and handles correlations between predictors. String columns (e.g. "control", "drug_a", "drug_b") are supported and auto-detected as factors. Factor levels use the original values from your data — so `cyl` with values [4, 6, 8] shows up as `cyl[4]`, `cyl[6]`, `cyl[8]` instead of abstract indices. No need to manually specify whether each variable is normal, skewed, or categorical — MCPower samples from the empirical distribution. This is especially useful when you have pilot data or a related dataset and want your power analysis to reflect actual conditions.
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/model-setup.png" alt="Model setup — define formula, variable types, and effect sizes" width="700">
+</p>
+<p align="center"><em>Model tab — define your formula, variable types, and effect sizes</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/anova-dark.png" alt="ANOVA mode with factor setup (dark theme)" width="700">
+</p>
+<p align="center"><em>ANOVA mode — set up factors with custom levels and proportions (dark theme)</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/running-analysis.png" alt="Running analysis with progress indicator" width="700">
+</p>
+<p align="center"><em>Running analysis — progress tracking with simulation count</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/results-power.png" alt="Results — power bar chart with scenario comparison" width="700">
+</p>
+<p align="center"><em>Results — power bar chart with scenario comparison and replication script</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/results-curves-dark.png" alt="Results — power curves across sample sizes (dark theme)" width="700">
+</p>
+<p align="center"><em>Find Sample Size — power curves across sample sizes (dark theme)</em></p>
+
 ## App workflow
 
 1. **Model tab** — Define your study design: enter a formula, set variable types, specify effect sizes, and optionally upload empirical data with correlations.
