@@ -89,30 +89,20 @@ Traditional power formulas work for simple designs but break down with interacti
 
 ## Screenshots
 
-<p align="center">
-  <img src="docs/screenshots/model-setup.png" alt="Model setup — define formula, variable types, and effect sizes" width="700">
-</p>
-<p align="center"><em>Model tab — define your formula, variable types, and effect sizes</em></p>
+| Model setup | ANOVA mode (dark) |
+|:---:|:---:|
+| <img src="docs/screenshots/model-setup.png" alt="Model setup" width="400"> | <img src="docs/screenshots/anova-dark.png" alt="ANOVA mode (dark theme)" width="400"> |
+| Define formula, variable types, and effect sizes | Set up factors with custom levels and proportions |
 
-<p align="center">
-  <img src="docs/screenshots/anova-dark.png" alt="ANOVA mode with factor setup (dark theme)" width="700">
-</p>
-<p align="center"><em>ANOVA mode — set up factors with custom levels and proportions (dark theme)</em></p>
+| Running analysis | Results — power chart |
+|:---:|:---:|
+| <img src="docs/screenshots/running-analysis.png" alt="Running analysis" width="400"> | <img src="docs/screenshots/results-power.png" alt="Results — power bar chart" width="400"> |
+| Progress tracking with simulation count | Scenario comparison and replication script |
 
-<p align="center">
-  <img src="docs/screenshots/running-analysis.png" alt="Running analysis with progress indicator" width="700">
-</p>
-<p align="center"><em>Running analysis — progress tracking with simulation count</em></p>
-
-<p align="center">
-  <img src="docs/screenshots/results-power.png" alt="Results — power bar chart with scenario comparison" width="700">
-</p>
-<p align="center"><em>Results — power bar chart with scenario comparison and replication script</em></p>
-
-<p align="center">
-  <img src="docs/screenshots/results-curves-dark.png" alt="Results — power curves across sample sizes (dark theme)" width="700">
-</p>
-<p align="center"><em>Find Sample Size — power curves across sample sizes (dark theme)</em></p>
+| Results — power curves (dark) |
+|:---:|
+| <img src="docs/screenshots/results-curves-dark.png" alt="Power curves (dark theme)" width="400"> |
+| Find Sample Size — power curves across sample sizes |
 
 ## App workflow
 
