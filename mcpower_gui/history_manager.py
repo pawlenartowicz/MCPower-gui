@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
 _MAX_ENTRIES = 25
+_VALID_RECORD_ID = re.compile(r"^[0-9a-f]{32}$")
 
 
 class HistoryManager:
@@ -88,6 +90,8 @@ class HistoryManager:
 
     def load(self, record_id: str) -> dict | None:
         """Return the full record for *record_id*, or None if not found."""
+        if not _VALID_RECORD_ID.match(record_id):
+            return None
         path = self._dir / f"{record_id}.json"
         if not path.exists():
             return None
@@ -98,6 +102,8 @@ class HistoryManager:
 
     def delete(self, record_id: str) -> bool:
         """Remove a history record. Returns True if deleted."""
+        if not _VALID_RECORD_ID.match(record_id):
+            return False
         path = self._dir / f"{record_id}.json"
         if path.exists():
             path.unlink()
@@ -106,6 +112,8 @@ class HistoryManager:
 
     def update_custom_name(self, record_id: str, name: str | None) -> None:
         """Set or clear a custom display name on an existing history record."""
+        if not _VALID_RECORD_ID.match(record_id):
+            return
         path = self._dir / f"{record_id}.json"
         if not path.exists():
             return

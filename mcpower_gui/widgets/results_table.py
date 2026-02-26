@@ -64,7 +64,7 @@ class ResultsTable(QWidget):
             achieved = "Yes" if power >= target_power else "No"
             self._table.setItem(row, 2, QTableWidgetItem(achieved))
 
-            if has_corrected:
+            if has_corrected and powers_corrected is not None:
                 corr_power = powers_corrected.get(name)
                 if corr_power is not None:
                     self._table.setItem(row, 3, QTableWidgetItem(f"{corr_power:.1f}"))
@@ -114,7 +114,7 @@ class ResultsTable(QWidget):
             self._table.setItem(row, 1, QTableWidgetItem(n_text))
             self._table.setItem(row, 2, QTableWidgetItem(f"{target_power:.1f}"))
 
-            if has_corrected:
+            if has_corrected and first_achieved_corrected is not None:
                 corr_n = first_achieved_corrected.get(name)
                 corr_text = (
                     str(corr_n)

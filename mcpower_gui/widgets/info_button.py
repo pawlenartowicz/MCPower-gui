@@ -19,8 +19,11 @@ from mcpower_gui._resources import resource_path
 
 def _load_doc_file(doc_file: str) -> str:
     """Load the full contents of a docs markdown file."""
-    path = resource_path("docs", doc_file)
-    return path.read_text(encoding="utf-8")
+    try:
+        path = resource_path("docs", doc_file)
+        return path.read_text(encoding="utf-8")
+    except (FileNotFoundError, OSError):
+        return "*Documentation unavailable.*"
 
 
 class InfoPopup(QFrame):

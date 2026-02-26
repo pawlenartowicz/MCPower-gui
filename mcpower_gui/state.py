@@ -9,49 +9,14 @@ import copy
 import os
 from dataclasses import dataclass, field
 
+from mcpower import __version__ as _mcpower_version
+from mcpower.core import DEFAULT_SCENARIO_CONFIG
+
+CITATION = f"Lenartowicz, P. (2025). MCPower: Monte Carlo Power Analysis for Complex Statistical Models (Version {_mcpower_version}) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.16502734"
+
 SCENARIO_ORDER = ["optimistic", "realistic", "doomer"]
 
-SCENARIO_DEFAULTS: dict[str, dict[str, float | str | int]] = {
-    "optimistic": {
-        "heterogeneity": 0.0,
-        "heteroskedasticity": 0.0,
-        "correlation_noise_sd": 0.0,
-        "distribution_change_prob": 0.0,
-        # LME-specific (only consumed by mixed models)
-        "icc_noise_sd": 0.0,
-        "random_effect_dist": "normal",
-        "random_effect_df": 5,
-        "residual_dist": "normal",
-        "residual_change_prob": 0.0,
-        "residual_df": 10,
-    },
-    "realistic": {
-        "heterogeneity": 0.2,
-        "heteroskedasticity": 0.1,
-        "correlation_noise_sd": 0.2,
-        "distribution_change_prob": 0.3,
-        # LME-specific
-        "icc_noise_sd": 0.15,
-        "random_effect_dist": "heavy_tailed",
-        "random_effect_df": 5,
-        "residual_dist": "heavy_tailed",
-        "residual_change_prob": 0.3,
-        "residual_df": 10,
-    },
-    "doomer": {
-        "heterogeneity": 0.4,
-        "heteroskedasticity": 0.2,
-        "correlation_noise_sd": 0.4,
-        "distribution_change_prob": 0.6,
-        # LME-specific
-        "icc_noise_sd": 0.30,
-        "random_effect_dist": "heavy_tailed",
-        "random_effect_df": 3,
-        "residual_dist": "heavy_tailed",
-        "residual_change_prob": 0.8,
-        "residual_df": 5,
-    },
-}
+SCENARIO_DEFAULTS = DEFAULT_SCENARIO_CONFIG
 
 
 def build_variable_type_string(variable_types: dict[str, dict]) -> str:
@@ -76,6 +41,23 @@ def build_variable_type_string(variable_types: dict[str, dict]) -> str:
                 n_levels = info.get("n_levels", 3)
                 parts.append(f"{name}=(factor, {n_levels})")
     return ", ".join(parts)
+
+
+def build_data_types(snapshot: dict) -> dict:
+    """Build ``data_types`` dict for ``MCPower.upload_data()`` from a state snapshot.
+
+    Returns a mapping of ``{factor_name: ("factor", ref_level)}`` for factors
+    whose reference level differs from the default (first sorted label).
+    Shared by AnalysisWorker and script_generator.
+    """
+    factor_refs = snapshot.get("factor_reference_levels", {})
+    factor_labels = snapshot.get("factor_level_labels", {})
+    data_types: dict = {}
+    for factor_name, ref_level in factor_refs.items():
+        level_labels = factor_labels.get(factor_name, [])
+        if level_labels and ref_level != level_labels[0]:
+            data_types[factor_name] = ("factor", ref_level)
+    return data_types
 
 
 def build_correlations_string(correlations: dict[str, float]) -> str:
@@ -142,7 +124,7 @@ class ModelState:
     parallel: bool | str = "mixedmodels"  # False, True, or "mixedmodels"
     n_cores: int = field(default_factory=lambda: max(1, (os.cpu_count() or 4) // 2))
     scenario_configs: dict = field(
-        default_factory=lambda: {k: dict(v) for k, v in SCENARIO_DEFAULTS.items()}
+        default_factory=lambda: copy.deepcopy(SCENARIO_DEFAULTS)
     )
 
     def build_variable_type_string(self) -> str:
@@ -178,5 +160,5 @@ class ModelState:
             "preserve_correlation": self.preserve_correlation,
             "correlations": dict(self.correlations),
             "cluster_configs": copy.deepcopy(self.cluster_configs),
-            "scenario_configs": {k: dict(v) for k, v in self.scenario_configs.items()},
+            "scenario_configs": copy.deepcopy(self.scenario_configs),
         }

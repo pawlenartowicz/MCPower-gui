@@ -110,7 +110,10 @@ class _SidebarDelegate(QStyledItemDelegate):
 
 
 def _load_doc_page(filename: str) -> str:
-    return resource_path("docs", filename).read_text(encoding="utf-8")
+    try:
+        return resource_path("docs", filename).read_text(encoding="utf-8")
+    except (FileNotFoundError, OSError):
+        return "*Documentation unavailable.*"
 
 
 class DocumentationDialog(QDialog):

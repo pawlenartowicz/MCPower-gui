@@ -9,6 +9,7 @@ from mcpower import MCPower
 from mcpower_gui.state import (
     ModelState,
     build_correlations_string,
+    build_data_types,
     build_variable_type_string,
 )
 
@@ -70,15 +71,7 @@ class AnalysisWorker(QThread):
 
             # Upload data if present (before set_variable_type and set_effects)
             if self._uploaded_data is not None:
-                # Build data_types with reference levels for non-default refs
-                data_types = {}
-                factor_refs = snap.get("factor_reference_levels", {})
-                factor_labels = snap.get("factor_level_labels", {})
-                for factor_name, ref_level in factor_refs.items():
-                    level_labels = factor_labels.get(factor_name, [])
-                    if level_labels and ref_level != level_labels[0]:
-                        # Non-default reference — pass as tuple
-                        data_types[factor_name] = ("factor", ref_level)
+                data_types = build_data_types(snap)
 
                 model.upload_data(
                     self._uploaded_data,
@@ -139,7 +132,7 @@ class AnalysisWorker(QThread):
                 model.set_scenario_configs(snap["scenario_configs"])
             if snap["correlations"]:
                 model.set_correlations(build_correlations_string(snap["correlations"]))
-            model.apply()
+            model._apply()
 
             # Extract per-run params
             correction = self._params.get("correction") or None

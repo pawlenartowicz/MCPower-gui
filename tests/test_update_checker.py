@@ -151,7 +151,9 @@ class TestFindPlatformAsset:
             assert _find_platform_asset(assets) == "https://dl/win"
 
     def test_macos_asset(self):
-        assets = [{"name": "MCPower-macos.zip", "browser_download_url": "https://dl/mac"}]
+        assets = [
+            {"name": "MCPower-macos.zip", "browser_download_url": "https://dl/mac"}
+        ]
         with patch("mcpower_gui.update_checker.sys") as mock_sys:
             mock_sys.platform = "darwin"
             assert _find_platform_asset(assets) == "https://dl/mac"

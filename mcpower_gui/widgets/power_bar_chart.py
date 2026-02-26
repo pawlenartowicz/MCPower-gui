@@ -6,8 +6,7 @@ from pyqtgraph import LabelItem
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from mcpower_gui.theme import current_colors
-
-_TAGLINE = "made in MCPower \u2014 simple Monte Carlo power analysis for complex models"
+from mcpower_gui.widgets.power_curve_plot import TAGLINE
 
 
 class PowerBarChart(QWidget):
@@ -23,12 +22,11 @@ class PowerBarChart(QWidget):
         self._plot.setBackground(colors["plot_bg"])
         self._plot.showGrid(x=True, y=False)
         self._plot.setLabel("bottom", "Power (%)")
-        tagline = LabelItem(_TAGLINE, size="9pt", color="#888888")
+        tagline = LabelItem(TAGLINE, size="9pt", color="#888888")
         self._plot.plotItem.layout.addItem(tagline, 4, 1)
         layout.addWidget(self._plot)
 
         self._target_line = None
-        self._bar_item = None
 
     def update_chart(self, powers: dict[str, float], target_power: float):
         """Redraw with new data.
@@ -41,6 +39,7 @@ class PowerBarChart(QWidget):
             Target power line (e.g. 80.0).
         """
         self._plot.clear()
+        self._target_line = None
         colors = current_colors()
         self._plot.setBackground(colors["plot_bg"])
         for axis_name in ("left", "bottom"):

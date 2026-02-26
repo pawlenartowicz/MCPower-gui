@@ -165,7 +165,8 @@ def current_mode() -> ThemeMode:
 def saved_font_size() -> int:
     """Read persisted font size from QSettings. Returns 0 if unset."""
     settings = QSettings("MCPower", "MCPower")
-    return int(settings.value(_FONT_SIZE_KEY, 0))
+    val = settings.value(_FONT_SIZE_KEY, 0, type=int)
+    return val if isinstance(val, int) else 0
 
 
 def save_font_size(size: int) -> None:

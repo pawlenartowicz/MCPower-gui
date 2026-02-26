@@ -3,6 +3,7 @@
 import copy
 import csv
 import math
+import os
 from collections import Counter
 from pathlib import Path
 
@@ -48,6 +49,25 @@ def _format_level_label(v) -> str:
     if isinstance(v, float) and math.isfinite(v) and v == int(v):
         return str(int(v))
     return str(v)
+
+
+def _analyze_column(values: list) -> dict:
+    """Compute summary statistics for a data column.
+
+    Returns dict with keys: unique_vals, n_unique, counts, total, proportions.
+    """
+    counts = Counter(_format_level_label(v) for v in values)
+    unique_vals = sorted(counts.keys())
+    n_unique = len(unique_vals)
+    total = sum(counts.values())
+    proportions = [round(counts[label] / total, 4) for label in unique_vals]
+    return {
+        "unique_vals": unique_vals,
+        "n_unique": n_unique,
+        "counts": counts,
+        "total": total,
+        "proportions": proportions,
+    }
 
 
 def _attach_readiness_dot(group_box: QGroupBox, title_bold: bool = False) -> QLabel:
@@ -481,20 +501,12 @@ class ModelTab(QWidget):
         data = self.state.uploaded_data
         if data is None or name not in data:
             return
-        values = data[name]
-        unique_vals = sorted(set(_format_level_label(v) for v in values))
-        n_levels = len(unique_vals)
-        counts = Counter(_format_level_label(v) for v in values)
-        total = sum(counts.values())
-        proportions = [
-            round(counts[label] / total, 4) for label in sorted(counts.keys())
-        ]
-
+        col = _analyze_column(data[name])
         factor_def = {
             "name": name,
-            "n_levels": n_levels,
-            "proportions": proportions,
-            "level_labels": unique_vals,
+            "n_levels": col["n_unique"],
+            "proportions": col["proportions"],
+            "level_labels": col["unique_vals"],
         }
         self.anova_editor.add_data_factor(factor_def)
 
@@ -612,17 +624,27 @@ class ModelTab(QWidget):
 
     # ── Slots ───────────────────────────────────────────────
 
+    _MAX_CSV_ROWS = 100_000
+
     @staticmethod
     def _read_csv(path: str) -> dict[str, list]:
         """Read a CSV file into a dict of lists, auto-converting numeric columns."""
+
+        def _read_rows(f):
+            reader = csv.DictReader(f)
+            rows = []
+            for row in reader:
+                rows.append(row)
+                if len(rows) >= ModelTab._MAX_CSV_ROWS:
+                    break
+            return rows
+
         try:
             with open(path, newline="", encoding="utf-8-sig") as f:
-                reader = csv.DictReader(f)
-                rows = list(reader)
+                rows = _read_rows(f)
         except UnicodeDecodeError:
             with open(path, newline="", encoding="latin-1") as f:
-                reader = csv.DictReader(f)
-                rows = list(reader)
+                rows = _read_rows(f)
         if not rows:
             raise ValueError("CSV file is empty")
         result: dict[str, list] = {}
@@ -639,6 +661,13 @@ class ModelTab(QWidget):
     def _on_upload(self):
         path, _ = QFileDialog.getOpenFileName(self, "Open CSV", "", "CSV files (*.csv)")
         if not path:
+            return
+        if os.path.getsize(path) > 50 * 1024 * 1024:
+            from PySide6.QtWidgets import QMessageBox
+
+            QMessageBox.warning(
+                self, "File Too Large", "CSV files larger than 50 MB are not supported."
+            )
             return
         try:
             data = self._read_csv(path)
@@ -706,66 +735,30 @@ class ModelTab(QWidget):
         - 7+ unique values -> continuous
         """
         self._data_detected.clear()
-        for col, values in data.items():
-            unique_vals = sorted(set(_format_level_label(v) for v in values))
-            n_unique = len(unique_vals)
+        for col_name, values in data.items():
+            col = _analyze_column(values)
+            n_unique = col["n_unique"]
             if n_unique == 2:
-                # Binary: compute proportion of the higher value
-                counts = Counter(_format_level_label(v) for v in values)
-                total = sum(counts.values())
-                sorted_keys = sorted(counts.keys())
-                proportion = round(counts[sorted_keys[-1]] / total, 2)
-                self._data_detected[col] = {
+                sorted_keys = sorted(col["counts"].keys())
+                proportion = round(col["counts"][sorted_keys[-1]] / col["total"], 2)
+                self._data_detected[col_name] = {
                     "type": "binary",
                     "proportion": proportion,
                     "n_unique": n_unique,
                 }
             elif 3 <= n_unique <= 6:
-                # Factor: compute level proportions and labels
-                sorted_labels = sorted(set(_format_level_label(v) for v in values))
-                counts = Counter(_format_level_label(v) for v in values)
-                total = sum(counts.values())
-                proportions = [
-                    round(counts[label] / total, 4) for label in sorted(counts.keys())
-                ]
-                self._data_detected[col] = {
+                self._data_detected[col_name] = {
                     "type": "factor",
                     "n_levels": n_unique,
-                    "proportions": proportions,
+                    "proportions": col["proportions"],
                     "n_unique": n_unique,
-                    "level_labels": sorted_labels,
+                    "level_labels": col["unique_vals"],
                 }
             else:
-                self._data_detected[col] = {
+                self._data_detected[col_name] = {
                     "type": "continuous",
                     "n_unique": n_unique,
                 }
-
-    def _detect_anova_factors_from_data(self, data: dict[str, list]) -> list[dict]:
-        """Detect columns suitable as ANOVA factors (2-12 distinct levels)."""
-        dep_var = self.anova_editor.get_dep_var()
-        factors = []
-        for col, values in data.items():
-            if col == dep_var:
-                continue
-            unique_vals = set(_format_level_label(v) for v in values)
-            n_unique = len(unique_vals)
-            if 2 <= n_unique <= 12:
-                sorted_vals = sorted(unique_vals)
-                counts = Counter(_format_level_label(v) for v in values)
-                total = sum(counts.values())
-                proportions = [
-                    round(counts[label] / total, 4) for label in sorted(counts.keys())
-                ]
-                factors.append(
-                    {
-                        "name": col,
-                        "n_levels": n_unique,
-                        "proportions": proportions,
-                        "level_labels": sorted_vals,
-                    }
-                )
-        return factors
 
     def _apply_data_to_anova(self, data: dict[str, list]):
         """Apply uploaded data to ANOVA mode — buttons handle factor selection."""
@@ -941,16 +934,17 @@ class ModelTab(QWidget):
         expanded, pred_types = self._expand_predictors(
             self.state.predictors, self.state.variable_types
         )
+        factor_refs: dict[str, str] | None
         if self._is_anova_mode():
             factor_refs = self.anova_editor.get_reference_levels()
         else:
             # Derive reference levels from level_labels (first label is reference)
-            factor_refs = {}
+            factor_refs_tmp: dict[str, str] = {}
             for name, info in self.state.variable_types.items():
                 level_labels = info.get("level_labels")
                 if level_labels:
-                    factor_refs[name] = level_labels[0]
-            factor_refs = factor_refs or None
+                    factor_refs_tmp[name] = level_labels[0]
+            factor_refs = factor_refs_tmp or None
         self.effects_editor.set_predictors(
             expanded, self.state.effects, pred_types, factor_refs
         )

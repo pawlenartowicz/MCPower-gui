@@ -6,6 +6,7 @@ import os
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QDialog,
     QDialogButtonBox,
@@ -213,12 +214,11 @@ class SettingsDialog(QDialog):
         self._cores_mode.setEnabled(cores_enabled)
         self._n_cores.setEnabled(cores_enabled)
 
-        self._parallel.currentIndexChanged.connect(
-            lambda idx: (
-                self._cores_mode.setEnabled(idx != 0),
-                self._n_cores.setEnabled(idx != 0),
-            )
-        )
+        def _on_parallel_changed(idx: int) -> None:
+            self._cores_mode.setEnabled(idx != 0)
+            self._n_cores.setEnabled(idx != 0)
+
+        self._parallel.currentIndexChanged.connect(_on_parallel_changed)
 
         page_layout.addWidget(general)
         attach_info_button(general, "general_settings.md")
@@ -271,13 +271,13 @@ class SettingsDialog(QDialog):
     def _build_scenario_group(
         self, title: str, cfg: dict, defaults: dict
     ) -> tuple[QGroupBox, dict, dict[str, QComboBox]]:
-        """Create a scenario group box with OLS + LME perturbation controls."""
+        """Create a scenario group box with general, residual, and LME controls."""
         group = QGroupBox(title)
         form = QFormLayout(group)
         spins: dict = {}
         combos: dict[str, QComboBox] = {}
 
-        # ── OLS / General perturbations ─────────────────────────
+        # ── General perturbations ────────────────────────────────
         for key, (label, lo, hi) in self._SPIN_CONFIGS.items():
             spin = DoubleSpinBox()
             spin.setRange(lo, hi)
@@ -287,10 +287,53 @@ class SettingsDialog(QDialog):
             form.addRow(label, spin)
             spins[key] = spin
 
+        # ── Residual Perturbations (all model types) ─────────────
+        res_sep = QLabel("Residual Perturbations")
+        res_sep.setStyleSheet("color: gray; font-style: italic; padding-top: 6px;")
+        form.addRow(res_sep)
+
+        # residual_dists — checkboxes for distribution pool
+        res_dists_val = cfg.get(
+            "residual_dists", defaults.get("residual_dists", ["heavy_tailed", "skewed"])
+        )
+        if isinstance(res_dists_val, str):
+            res_dists_val = [res_dists_val] if res_dists_val != "normal" else []
+
+        res_dists_row = QHBoxLayout()
+        cb_heavy = QCheckBox("Heavy tailed")
+        cb_heavy.setChecked("heavy_tailed" in res_dists_val)
+        cb_skewed = QCheckBox("Skewed")
+        cb_skewed.setChecked("skewed" in res_dists_val)
+        res_dists_row.addWidget(cb_heavy)
+        res_dists_row.addWidget(cb_skewed)
+        res_dists_row.addStretch()
+        form.addRow("Residual dists:", res_dists_row)
+        # Store checkboxes for reading on accept
+        spins["_residual_cb_heavy"] = cb_heavy
+        spins["_residual_cb_skewed"] = cb_skewed
+
+        # residual_change_prob
+        res_prob_spin = DoubleSpinBox()
+        res_prob_spin.setRange(0.0, 1.0)
+        res_prob_spin.setSingleStep(0.05)
+        res_prob_spin.setDecimals(2)
+        res_prob_spin.setValue(
+            cfg.get("residual_change_prob", defaults.get("residual_change_prob", 0.0))
+        )
+        form.addRow("Residual change prob:", res_prob_spin)
+        spins["residual_change_prob"] = res_prob_spin
+
+        # residual_df
+        res_df_spin = SpinBox()
+        res_df_spin.setRange(2, 50)
+        res_df_spin.setValue(cfg.get("residual_df", defaults.get("residual_df", 10)))
+        form.addRow("Residual df:", res_df_spin)
+        spins["residual_df"] = res_df_spin
+
         # ── Mixed Effects Perturbations ──────────────────────────
-        sep = QLabel("Mixed Effects Perturbations")
-        sep.setStyleSheet("color: gray; font-style: italic; padding-top: 6px;")
-        form.addRow(sep)
+        lme_sep = QLabel("Mixed Effects Perturbations")
+        lme_sep.setStyleSheet("color: gray; font-style: italic; padding-top: 6px;")
+        form.addRow(lme_sep)
 
         # icc_noise_sd
         icc_spin = DoubleSpinBox()
@@ -322,35 +365,6 @@ class SettingsDialog(QDialog):
         )
         form.addRow("Random effect df:", re_df_spin)
         spins["random_effect_df"] = re_df_spin
-
-        # residual_dist
-        res_dist_combo = QComboBox()
-        for val, lbl in self._DIST_ITEMS:
-            res_dist_combo.addItem(lbl, val)
-        res_val = cfg.get("residual_dist", defaults.get("residual_dist", "normal"))
-        res_dist_combo.setCurrentIndex(
-            self._DIST_OPTIONS.index(res_val) if res_val in self._DIST_OPTIONS else 0
-        )
-        form.addRow("Residual dist:", res_dist_combo)
-        combos["residual_dist"] = res_dist_combo
-
-        # residual_change_prob
-        res_prob_spin = DoubleSpinBox()
-        res_prob_spin.setRange(0.0, 1.0)
-        res_prob_spin.setSingleStep(0.05)
-        res_prob_spin.setDecimals(2)
-        res_prob_spin.setValue(
-            cfg.get("residual_change_prob", defaults.get("residual_change_prob", 0.0))
-        )
-        form.addRow("Residual change prob:", res_prob_spin)
-        spins["residual_change_prob"] = res_prob_spin
-
-        # residual_df
-        res_df_spin = SpinBox()
-        res_df_spin.setRange(2, 50)
-        res_df_spin.setValue(cfg.get("residual_df", defaults.get("residual_df", 10)))
-        form.addRow("Residual df:", res_df_spin)
-        spins["residual_df"] = res_df_spin
 
         attach_info_button(group, "scenario_settings.md")
         return group, spins, combos
@@ -387,9 +401,19 @@ class SettingsDialog(QDialog):
         s.n_cores = self._n_cores.value() if cores_data == "custom" else cores_data
         s.scenario_configs = {}
         for name in self._scenario_spins:
+            spins = self._scenario_spins[name]
             cfg = {
-                key: spin.value() for key, spin in self._scenario_spins[name].items()
+                key: spin.value()
+                for key, spin in spins.items()
+                if not key.startswith("_residual_cb_")
             }
+            # Build residual_dists list from checkboxes
+            residual_dists = []
+            if spins["_residual_cb_heavy"].isChecked():
+                residual_dists.append("heavy_tailed")
+            if spins["_residual_cb_skewed"].isChecked():
+                residual_dists.append("skewed")
+            cfg["residual_dists"] = residual_dists
             cfg.update(
                 {
                     key: combo.currentData()

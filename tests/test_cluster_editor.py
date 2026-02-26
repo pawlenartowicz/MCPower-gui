@@ -50,8 +50,7 @@ class TestClusterEditorRandomIntercept:
 
 class TestClusterEditorRandomSlope:
     def test_slope_fields(self, editor):
-        re = [{"type": "random_slope", "grouping_var": "school",
-               "slope_vars": ["x1"]}]
+        re = [{"type": "random_slope", "grouping_var": "school", "slope_vars": ["x1"]}]
         editor.set_random_effects(re, ["x1"])
         configs = editor.get_cluster_configs()
         assert len(configs) == 1
@@ -66,8 +65,11 @@ class TestClusterEditorNested:
     def test_nested_produces_parent_and_child(self, editor):
         re = [
             {"type": "random_intercept", "grouping_var": "school"},
-            {"type": "random_intercept", "grouping_var": "school:classroom",
-             "parent_var": "school"},
+            {
+                "type": "random_intercept",
+                "grouping_var": "school:classroom",
+                "parent_var": "school",
+            },
         ]
         editor.set_random_effects(re, ["x1"])
         configs = editor.get_cluster_configs()

@@ -14,9 +14,7 @@ class TestMixedModelStateRoundTrip:
             formula="y ~ x1 + (1|school)",
             predictors=["x1"],
             effects={"x1": 0.5},
-            cluster_configs=[
-                {"grouping_var": "school", "ICC": 0.2, "n_clusters": 20}
-            ],
+            cluster_configs=[{"grouping_var": "school", "ICC": 0.2, "n_clusters": 20}],
         )
         snap = state.snapshot()
         serialized = json.dumps(snap)
@@ -65,9 +63,7 @@ class TestMixedModelScriptGeneration:
         state = ModelState(
             formula="y ~ x1 + (1|school)",
             effects={"x1": 0.5},
-            cluster_configs=[
-                {"grouping_var": "school", "ICC": 0.2, "n_clusters": 20}
-            ],
+            cluster_configs=[{"grouping_var": "school", "ICC": 0.2, "n_clusters": 20}],
         )
         snap = state.snapshot()
         params = {"sample_size": 600, "target_test": "all"}

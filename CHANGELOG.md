@@ -2,6 +2,36 @@
 
 All notable changes to MCPower GUI are documented in this file.
 
+## [0.3.0] — 2026-02-24
+
+### Changed
+
+- **Residual perturbations for all model types** — `residual_dist` (single dropdown) replaced with `residual_dists` (list of checkboxes: Heavy tailed, Skewed). Residual perturbations now apply to OLS and mixed models alike, not just LME
+- **Citation format updated** — APA citation now includes version number and Zenodo DOI; BibTeX key changed to `mcpower2025`
+- **DRY refactoring** — Extracted `build_data_types()` into `state.py` (shared by `worker.py` and `script_generator.py`), `normalize_proportion_spinboxes()` into `spin_boxes.py` (shared by `anova_factor_editor.py` and `variable_type_editor.py`), `_analyze_column()` helper in `model_tab.py`
+- Scenario settings documentation rewritten to reflect residual perturbation changes
+- **Worker and script generator updated for `_apply()` rename** — `model.apply()` → `model._apply()` in worker; `model.apply()` line removed from generated replication scripts (called automatically by `find_power()` / `find_sample_size()`)
+- Bumped MCPower dependency to 0.6.0
+
+### Added
+
+- **Test formula filtering** — Typing in the "Test formula" field now auto-filters the target test checkboxes to show only matching effects
+- **Security hardening** — Record ID validation in `HistoryManager` (regex guard against path traversal), HTML escaping of custom names in history dialog, CSV file size limit (50 MB) and row limit (100,000)
+- **Atomic CSV writes** — Result panel CSV export uses `tempfile.mkstemp()` + `os.replace()` to prevent data corruption
+- **Graceful doc fallback** — Info button and documentation dialog catch missing/unreadable doc files instead of crashing
+- New documentation: model misspecification / test formula sections in Key Concepts, Find Power, and Find Sample Size docs
+- New tests: `test_analysis_tab.py`, `test_correlation_editor.py`, `test_flow_layout.py`, `test_post_hoc_selector.py`, `test_results_tab.py`, `test_results_table.py`, `test_spin_boxes.py`, `test_target_test_selector.py`, `test_worker.py`
+
+### Fixed
+
+- Lambda closure bug in Results tab context menu — rename/close actions could target the wrong tab
+- Missing `_mcpower_version` import in result panel CSV export
+
+### Removed
+
+- `_detect_anova_factors_from_data()` method (dead code)
+- Unused `_bar_item` instance variable in `PowerBarChart`
+
 ## [0.2.5] — 2026-02-22
 
 ### Changed

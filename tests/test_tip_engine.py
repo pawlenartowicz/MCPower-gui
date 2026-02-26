@@ -254,11 +254,7 @@ class TestYamlIntegration:
 
         import yaml
 
-        tips_path = (
-            Path(__file__).resolve().parent.parent
-            / "mcpower_gui"
-            / "tips.yaml"
-        )
+        tips_path = Path(__file__).resolve().parent.parent / "mcpower_gui" / "tips.yaml"
         with open(tips_path) as f:
             rules = yaml.safe_load(f)
         return TipEngine(rules)

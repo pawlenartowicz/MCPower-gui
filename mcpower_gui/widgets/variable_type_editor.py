@@ -12,7 +12,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from mcpower_gui.widgets.spin_boxes import DoubleSpinBox, SpinBox
+from mcpower_gui.widgets.spin_boxes import (
+    DoubleSpinBox,
+    SpinBox,
+    normalize_proportion_spinboxes,
+)
 
 
 class VariableTypeEditor(QWidget):
@@ -153,8 +157,9 @@ class _PredictorRow(QWidget):
         # Clear params area
         while self._params_area.count():
             item = self._params_area.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            w = item.widget() if item is not None else None
+            if w is not None:
+                w.deleteLater()
 
         self._proportion_spin = None
         self._levels_spin = None
@@ -216,8 +221,9 @@ class _PredictorRow(QWidget):
         # Clear existing
         while self._factor_layout.count():
             item = self._factor_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            w = item.widget() if item is not None else None
+            if w is not None:
+                w.deleteLater()
         self._factor_proportions = []
 
         # Default: equal proportions
@@ -255,14 +261,7 @@ class _PredictorRow(QWidget):
     def _normalize_proportions(self):
         """Normalize factor proportions to sum to 1.0 (triggered by button)."""
         self._suppress_signals = True
-        raw = [s.value() for s in self._factor_proportions]
-        total = sum(raw)
-        if total > 0:
-            normalized = [round(v / total, 2) for v in raw]
-            diff = round(1.0 - sum(normalized), 2)
-            normalized[-1] = round(normalized[-1] + diff, 2)
-            for spin, val in zip(self._factor_proportions, normalized):
-                spin.setValue(val)
+        normalize_proportion_spinboxes(self._factor_proportions)
         self._suppress_signals = False
         self.changed.emit()
 

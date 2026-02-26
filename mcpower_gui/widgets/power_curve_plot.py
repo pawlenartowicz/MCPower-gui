@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from mcpower_gui.theme import current_colors
 
-_TAGLINE = "made in MCPower \u2014 simple Monte Carlo power analysis for complex models"
+TAGLINE = "made in MCPower \u2014 simple Monte Carlo power analysis for complex models"
 
 # Distinguishable colors for up to 10 lines
 _COLORS = [
@@ -39,7 +39,7 @@ class PowerCurvePlot(QWidget):
         self._plot.setLabel("bottom", "Sample Size")
         self._plot.setLabel("left", "Power (%)")
         self._plot.addLegend()
-        tagline = LabelItem(_TAGLINE, size="9pt", color="#888888")
+        tagline = LabelItem(TAGLINE, size="9pt", color="#888888")
         self._plot.plotItem.layout.addItem(tagline, 4, 1)
         layout.addWidget(self._plot)
 

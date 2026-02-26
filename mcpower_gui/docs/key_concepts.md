@@ -95,6 +95,29 @@ Scenario parameters are configured in Settings. Running with scenarios enabled g
 
 For more detail, see the [Scenario Analysis](https://github.com/pawlenartowicz/MCPower/wiki/Concept-Scenario-Analysis) concept guide.
 
+## Model Misspecification (Test Formula)
+
+The **Test formula** field in the Analysis tab lets you evaluate power under model misspecification — where the analysis model differs from the true data-generating process.
+
+When you enter a test formula, MCPower:
+
+1. **Generates data** using your model formula (all predictors contribute to the outcome).
+2. **Fits the analysis** using the test formula instead (a simpler or different model).
+
+This reveals what happens to power when the analysis model is "wrong" — a common real-world concern.
+
+### Common use cases
+
+**Omitted variable bias** — Drop a predictor from the test formula to see how omitting a real effect changes power for the remaining predictors. For example, if your model formula is `y = x1 + x2 + x3`, set the test formula to `y = x1 + x2` to see the impact of ignoring `x3`.
+
+**Ignoring clustering** — Generate clustered data with a mixed model (e.g., `y ~ treatment + covariate + (1|school)`) but fit a simple regression in the test formula (`y ~ treatment + covariate`). This shows how ignoring the cluster structure affects power — typically inflating it because the model underestimates standard errors.
+
+**Factor variable omission** — Drop a categorical predictor to see how its unexplained variance affects power for the remaining effects.
+
+### How to use it
+
+In the Analysis tab, enter a formula in the **Test formula** field. The test formula must use a **subset** of the variables from your model formula — you cannot introduce new variables. When a test formula is entered, the available target tests are automatically filtered to show only effects present in the test formula. Leave the field empty to use the same formula for both generation and testing.
+
 ## Mixed-Effects Models
 
 Mixed-effects models handle **clustered data** — observations grouped within higher-level units (e.g., students within schools, patients within hospitals). When you enter a formula with random effects, the cluster configuration editor appears automatically in the Model tab.

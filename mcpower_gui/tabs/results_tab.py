@@ -154,18 +154,20 @@ class ResultsTab(QWidget):
         menu = QMenu(self)
 
         rename_action = QAction("Rename", self)
-        rename_action.triggered.connect(lambda: self._rename_tab(index))
+        rename_action.triggered.connect(lambda _=False, i=index: self._rename_tab(i))
         menu.addAction(rename_action)
 
         menu.addSeparator()
 
         close_action = QAction("Close", self)
-        close_action.triggered.connect(lambda: self._close_tab(index))
+        close_action.triggered.connect(lambda _=False, i=index: self._close_tab(i))
         menu.addAction(close_action)
 
         if self._tab_widget.count() > 1:
             close_others = QAction("Close Others", self)
-            close_others.triggered.connect(lambda: self._close_others(index))
+            close_others.triggered.connect(
+                lambda _=False, i=index: self._close_others(i)
+            )
             menu.addAction(close_others)
 
         close_all = QAction("Close All", self)
@@ -183,7 +185,7 @@ class ResultsTab(QWidget):
             else self._tab_widget.tabText(index)
         )
         new_name, ok = QInputDialog.getText(
-            self, "Rename Tab", "New name:", text=current_base
+            self, "Rename Tab", "New name:", text=current_base or ""
         )
         if ok and new_name.strip():
             new_name = new_name.strip()

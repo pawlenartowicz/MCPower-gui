@@ -14,7 +14,13 @@ page, not change the widget's value.  Two layers enforce this:
     depth in case something bypasses the global filter).
 """
 
-__all__ = ["WheelGuard", "SpinBox", "DoubleSpinBox", "install_wheel_guard"]
+__all__ = [
+    "WheelGuard",
+    "SpinBox",
+    "DoubleSpinBox",
+    "install_wheel_guard",
+    "normalize_proportion_spinboxes",
+]
 
 from PySide6.QtCore import QEvent, QObject, Qt
 from PySide6.QtGui import QWheelEvent
@@ -103,3 +109,20 @@ class DoubleSpinBox(QDoubleSpinBox):
 
     def wheelEvent(self, event: QWheelEvent) -> None:  # noqa: N802
         event.ignore()
+
+
+# ---------------------------------------------------------------------------
+# Shared proportion normalization
+# ---------------------------------------------------------------------------
+
+
+def normalize_proportion_spinboxes(spinboxes: list[QDoubleSpinBox]) -> None:
+    """Normalize values in *spinboxes* so they sum to 1.0."""
+    raw = [s.value() for s in spinboxes]
+    total = sum(raw)
+    if total > 0:
+        normalized = [round(v / total, 2) for v in raw]
+        diff = round(1.0 - sum(normalized), 2)
+        normalized[-1] = round(normalized[-1] + diff, 2)
+        for spin, val in zip(spinboxes, normalized):
+            spin.setValue(val)

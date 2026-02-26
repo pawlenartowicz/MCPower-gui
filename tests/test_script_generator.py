@@ -92,9 +92,7 @@ class TestGenerateScriptClusterConfigs:
     def test_random_intercept(self):
         state = _minimal_state(
             formula="y ~ x1 + (1|school)",
-            cluster_configs=[
-                {"grouping_var": "school", "ICC": 0.2, "n_clusters": 20}
-            ],
+            cluster_configs=[{"grouping_var": "school", "ICC": 0.2, "n_clusters": 20}],
         )
         script = generate_script(state, _minimal_params(), mode="power")
         assert 'set_cluster("school"' in script
@@ -105,9 +103,14 @@ class TestGenerateScriptClusterConfigs:
         state = _minimal_state(
             formula="y ~ x1 + (1 + x1|school)",
             cluster_configs=[
-                {"grouping_var": "school", "ICC": 0.2, "n_clusters": 20,
-                 "random_slopes": ["x1"], "slope_variance": 0.1,
-                 "slope_intercept_corr": 0.3}
+                {
+                    "grouping_var": "school",
+                    "ICC": 0.2,
+                    "n_clusters": 20,
+                    "random_slopes": ["x1"],
+                    "slope_variance": 0.1,
+                    "slope_intercept_corr": 0.3,
+                }
             ],
         )
         script = generate_script(state, _minimal_params(), mode="power")

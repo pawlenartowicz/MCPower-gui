@@ -44,33 +44,18 @@ else:
     app_icon = None
 
 # ── Hidden imports that PyInstaller cannot detect automatically ──
-# MCPower uses conditional / lazy imports for optional backends.
 hiddenimports = [
     # MCPower core
     "mcpower",
     "mcpower.model",
     "mcpower.utils.parsers",
-    # Stats (imported inside functions)
-    "scipy.stats",
     # Optional parallel backend
     "joblib",
     # multiprocessing freeze support
     "multiprocessing",
+    # C++ native backend
+    "mcpower_native",
 ]
-
-# Optional: Numba JIT — only include if installed
-try:
-    import numba  # noqa: F401
-    hiddenimports.append("numba")
-except ImportError:
-    pass
-
-# Optional: compiled C++ backend
-try:
-    import mcpower_native  # noqa: F401
-    hiddenimports.append("mcpower_native")
-except ImportError:
-    pass
 
 # ── Analysis ─────────────────────────────────────────────────────
 a = Analysis(
@@ -91,8 +76,8 @@ a = Analysis(
         "IPython", "jedi", "parso", "pygments",
         "prompt_toolkit", "traitlets", "tornado", "zmq",
         "ipykernel", "jupyter_client", "jupyter_core", "debugpy", "pexpect",
-        # statsmodels — optional MCPower[lme] dep, not needed in GUI
-        "statsmodels",
+        # statsmodels/scipy — optional MCPower deps, not needed in GUI
+        "statsmodels", "scipy",
         # Test/build tools
         "_pytest", "pytest", "pluggy", "coverage",
         "setuptools", "pkg_resources",

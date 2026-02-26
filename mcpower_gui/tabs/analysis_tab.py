@@ -17,6 +17,8 @@ from PySide6.QtWidgets import (
 
 from mcpower_gui.widgets.spin_boxes import DoubleSpinBox, SpinBox
 
+import re
+
 from mcpower_gui.state import ModelState
 from mcpower_gui.widgets.info_button import attach_info_button
 from mcpower_gui.widgets.post_hoc_selector import PostHocSelector
@@ -37,6 +39,7 @@ class AnalysisTab(QWidget):
         super().__init__(parent)
         self._state = state
         self._model_ready = False
+        self._all_available_tests: list[str] = []
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
@@ -72,14 +75,14 @@ class AnalysisTab(QWidget):
         self._correction_label = QLabel("Correction:")
         cf.addRow(self._correction_label, self._correction)
 
-        self._target_tests = TargetTestSelector()
-        self._target_tests_label = QLabel("Target tests:")
-        cf.addRow(self._target_tests_label, self._target_tests)
-
         self._test_formula = QLineEdit()
         self._test_formula.setPlaceholderText("Leave empty to use model formula")
         self._test_formula_label = QLabel("Test formula:")
         cf.addRow(self._test_formula_label, self._test_formula)
+
+        self._target_tests = TargetTestSelector()
+        self._target_tests_label = QLabel("Target tests:")
+        cf.addRow(self._target_tests_label, self._target_tests)
 
         root.addWidget(common_group)
         attach_info_button(common_group, "common_settings.md")
@@ -145,6 +148,7 @@ class AnalysisTab(QWidget):
         # Connections
         self._btn_power.clicked.connect(self._on_run_power)
         self._btn_ss.clicked.connect(self._on_run_sample_size)
+        self._test_formula.textChanged.connect(self._apply_test_formula_filter)
 
     # ── Public API ───────────────────────────────────────────
 
@@ -178,8 +182,9 @@ class AnalysisTab(QWidget):
             self._test_formula.show()
 
     def set_available_tests(self, tests: list[str]):
-        """Rebuild the target test checklist with *tests*."""
-        self._target_tests.set_tests(tests)
+        """Rebuild the target test checklist with *tests*, filtered by test formula."""
+        self._all_available_tests = list(tests)
+        self._apply_test_formula_filter()
 
     def set_available_factors(self, factors: dict[str, int]):
         """Update post hoc selector with current factor variables."""
@@ -227,6 +232,79 @@ class AnalysisTab(QWidget):
         )
 
     # ── Internal ─────────────────────────────────────────────
+
+    def _apply_test_formula_filter(self, _text: str = ""):
+        """Filter target tests to only show effects present in the test formula.
+
+        When the test formula is empty, all available tests are shown.
+        """
+        formula = self._test_formula.text().strip()
+        if not formula:
+            self._target_tests.set_tests(self._all_available_tests)
+            return
+
+        main_effects, interactions = self._parse_test_formula(formula)
+        filtered = []
+        for name in self._all_available_tests:
+            if name == "overall":
+                filtered.append(name)
+            elif ":" in name:
+                # Interaction term like "x1:group[F]" — extract base names
+                parts = name.split(":")
+                bases = {re.sub(r"\[.*\]$", "", p) for p in parts}
+                if bases in interactions:
+                    filtered.append(name)
+            elif "[" in name:
+                # Factor dummy like "group[F]" — extract base name
+                base = re.sub(r"\[.*\]$", "", name)
+                if base in main_effects:
+                    filtered.append(name)
+            else:
+                # Simple main effect like "x1"
+                if name in main_effects:
+                    filtered.append(name)
+        self._target_tests.set_tests(filtered)
+
+    @staticmethod
+    def _parse_test_formula(formula: str) -> tuple[set[str], list[frozenset[str]]]:
+        """Parse a test formula into main effects and interaction sets.
+
+        Returns (main_effects, interactions) where:
+        - main_effects is a set of predictor base names
+        - interactions is a list of frozensets of base names
+        """
+        # Strip LHS (everything before = or ~)
+        for sep in ("~", "="):
+            if sep in formula:
+                formula = formula.split(sep, 1)[1]
+                break
+
+        # Strip random effects (anything in parentheses)
+        formula = re.sub(r"\([^)]*\)", "", formula)
+
+        # Split on + and strip whitespace
+        raw_terms = [t.strip() for t in formula.split("+") if t.strip()]
+
+        main_effects: set[str] = set()
+        interactions: list[frozenset[str]] = []
+
+        for term in raw_terms:
+            if "*" in term:
+                # Expand a*b into a, b, a:b
+                parts = [p.strip() for p in term.split("*") if p.strip()]
+                main_effects.update(parts)
+                # Add all pairwise interactions
+                for i in range(len(parts)):
+                    for j in range(i + 1, len(parts)):
+                        interactions.append(frozenset({parts[i], parts[j]}))
+            elif ":" in term:
+                # Explicit interaction like x1:x2
+                parts = [p.strip() for p in term.split(":") if p.strip()]
+                interactions.append(frozenset(parts))
+            else:
+                main_effects.add(term)
+
+        return main_effects, interactions
 
     def _gather_common_params(self) -> dict:
         """Read shared widgets into a parameter dict."""

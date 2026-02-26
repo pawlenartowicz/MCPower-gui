@@ -17,7 +17,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from mcpower_gui.widgets.spin_boxes import DoubleSpinBox, SpinBox
+from mcpower_gui.widgets.spin_boxes import (
+    DoubleSpinBox,
+    SpinBox,
+    normalize_proportion_spinboxes,
+)
 
 
 class AnovaFactorEditor(QWidget):
@@ -434,7 +438,9 @@ class _FactorRow(QWidget):
         ref_layout.addStretch()
 
         # Add to the outer layout (after the top row)
-        self.layout().addWidget(ref_row)
+        layout = self.layout()
+        assert layout is not None
+        layout.addWidget(ref_row)
 
     def get_reference_level(self) -> str | None:
         """Return the selected reference level, or None if not in data mode."""
@@ -465,8 +471,9 @@ class _FactorRow(QWidget):
         """Create proportion spinboxes for each level."""
         while self._prop_layout.count():
             item = self._prop_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            w = item.widget() if item is not None else None
+            if w is not None:
+                w.deleteLater()
         self._proportion_spins = []
 
         if len(existing) == n_levels:
@@ -501,14 +508,7 @@ class _FactorRow(QWidget):
     def _normalize(self):
         self._suppress = True
         try:
-            raw = [s.value() for s in self._proportion_spins]
-            total = sum(raw)
-            if total > 0:
-                normalized = [round(v / total, 2) for v in raw]
-                diff = round(1.0 - sum(normalized), 2)
-                normalized[-1] = round(normalized[-1] + diff, 2)
-                for spin, val in zip(self._proportion_spins, normalized):
-                    spin.setValue(val)
+            normalize_proportion_spinboxes(self._proportion_spins)
         finally:
             self._suppress = False
         self.changed.emit()

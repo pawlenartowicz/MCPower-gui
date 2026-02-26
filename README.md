@@ -132,16 +132,18 @@ MCPower GUI is built on [MCPower](https://github.com/pawlenartowicz/MCPower). MC
 
 GPL v3. If you use MCPower in research, please cite:
 
-Lenartowicz, P. (2025). MCPower: Monte Carlo Power Analysis for Statistical Models. Zenodo. DOI: 10.5281/zenodo.16502734
+Lenartowicz, P. (2025). MCPower: Monte Carlo Power Analysis for Complex Statistical Models (Version <your version>) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.16502734
+
+*Replace `<your version>` with the version you used — check with `import mcpower; print(mcpower.__version__)`.*
 
 ```bibtex
 @software{mcpower2025,
-  author = {Pawel Lenartowicz},
-  title = {MCPower: Monte Carlo Power Analysis for Statistical Models},
-  year = {2025},
+  author    = {Lenartowicz, Pawe{\l}},
+  title     = {{MCPower}: Monte Carlo Power Analysis for Complex Statistical Models},
+  year      = {2025},
   publisher = {Zenodo},
-  doi = {10.5281/zenodo.16502734},
-  url = {https://doi.org/10.5281/zenodo.16502734}
+  doi       = {10.5281/zenodo.16502734},
+  url       = {https://doi.org/10.5281/zenodo.16502734}
 }
 ```
 

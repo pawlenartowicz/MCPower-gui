@@ -39,9 +39,14 @@ class MainWindow(QMainWindow):
 
         self._state = ModelState()
         self._worker: AnalysisWorker | None = None
-        history_dir = Path(
-            QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
-        ) / "history"
+        history_dir = (
+            Path(
+                QStandardPaths.writableLocation(
+                    QStandardPaths.StandardLocation.AppDataLocation
+                )
+            )
+            / "history"
+        )
         self._history = HistoryManager(history_dir=history_dir)
 
         # Menu bar

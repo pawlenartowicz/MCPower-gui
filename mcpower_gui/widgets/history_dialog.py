@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 from datetime import datetime
 
 from PySide6.QtCore import Signal
@@ -91,11 +92,13 @@ class HistoryDialog(QDialog):
         except (ValueError, TypeError):
             ts_display = ts[:16] if ts else "?"
 
-        custom_name = rec.get("custom_name") or ""
+        custom_name = html.escape(rec.get("custom_name") or "")
+        safe_mode_label = html.escape(mode_label)
+        ts_display = html.escape(ts_display)
         if custom_name:
-            title = QLabel(f"<b>{custom_name}</b> — {mode_label} — {ts_display}")
+            title = QLabel(f"<b>{custom_name}</b> — {safe_mode_label} — {ts_display}")
         else:
-            title = QLabel(f"<b>{mode_label}</b> — {ts_display}")
+            title = QLabel(f"<b>{safe_mode_label}</b> — {ts_display}")
         info.addWidget(title)
 
         formula = rec.get("formula", "")

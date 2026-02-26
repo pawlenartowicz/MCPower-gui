@@ -6,7 +6,7 @@ __all__ = ["TutorialGuide", "is_tutorial_enabled", "set_tutorial_enabled"]
 
 from pathlib import Path
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 from PySide6.QtCore import QSettings, Signal, Qt
 from PySide6.QtWidgets import (
     QHBoxLayout,
@@ -283,7 +283,7 @@ class TutorialGuide(QWidget):
 def is_tutorial_enabled() -> bool:
     """Check if the tutorial guide is enabled in settings."""
     settings = QSettings("MCPower", "MCPower")
-    return settings.value(TutorialGuide._SETTINGS_KEY, True, type=bool)
+    return bool(settings.value(TutorialGuide._SETTINGS_KEY, True, type=bool))
 
 
 def set_tutorial_enabled(enabled: bool) -> None:

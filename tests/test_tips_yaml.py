@@ -14,11 +14,25 @@ VALID_TABS = {"model", "analysis"}
 REQUIRED_KEYS = {"id", "tab", "style", "priority", "conditions"}
 
 VALID_STATE_KEYS = {
-    "tab", "mode", "formula", "has_effects", "has_non_continuous",
-    "has_clusters", "clusters_configured", "clusters_resolved",
-    "data_uploaded", "data_filename", "data_rows", "corr_mode",
-    "correlable_count", "data_section_open", "corr_section_open",
-    "model_ready", "has_factors", "n_predictors", "formula_display",
+    "tab",
+    "mode",
+    "formula",
+    "has_effects",
+    "has_non_continuous",
+    "has_clusters",
+    "clusters_configured",
+    "clusters_resolved",
+    "data_uploaded",
+    "data_filename",
+    "data_rows",
+    "corr_mode",
+    "correlable_count",
+    "data_section_open",
+    "corr_section_open",
+    "model_ready",
+    "has_factors",
+    "n_predictors",
+    "formula_display",
 }
 
 
@@ -42,7 +56,9 @@ class TestTipsYamlStructure:
 
     def test_ids_unique(self):
         ids = [t["id"] for t in _load_tips()]
-        assert len(ids) == len(set(ids)), f"Duplicate IDs: {[x for x in ids if ids.count(x) > 1]}"
+        assert len(ids) == len(set(ids)), (
+            f"Duplicate IDs: {[x for x in ids if ids.count(x) > 1]}"
+        )
 
     def test_valid_styles(self):
         for tip in _load_tips():
@@ -90,97 +106,161 @@ class TestTipsYamlCoverage:
         return engine.evaluate(state)
 
     def test_linear_no_formula(self):
-        result = self._evaluate({
-            "tab": "model", "mode": "linear", "formula": "",
-            "has_effects": False, "data_section_open": False,
-            "corr_section_open": False,
-        })
+        result = self._evaluate(
+            {
+                "tab": "model",
+                "mode": "linear",
+                "formula": "",
+                "has_effects": False,
+                "data_section_open": False,
+                "corr_section_open": False,
+            }
+        )
         assert len(result) >= 1, "No tip for linear mode with empty formula"
 
     def test_anova_no_factors(self):
-        result = self._evaluate({
-            "tab": "model", "mode": "anova", "formula": "",
-            "has_effects": False, "data_section_open": False,
-            "corr_section_open": False,
-        })
+        result = self._evaluate(
+            {
+                "tab": "model",
+                "mode": "anova",
+                "formula": "",
+                "has_effects": False,
+                "data_section_open": False,
+                "corr_section_open": False,
+            }
+        )
         assert len(result) >= 1, "No tip for ANOVA with no factors"
 
     def test_formula_no_effects(self):
-        result = self._evaluate({
-            "tab": "model", "mode": "linear", "formula": "y = x1 + x2",
-            "has_effects": False, "has_clusters": False,
-            "clusters_resolved": True,
-            "data_section_open": False, "corr_section_open": False,
-            "formula_display": "y = x1 + x2",
-        })
-        assert any(t.style == "next" for t in result), "No 'next' tip for formula without effects"
+        result = self._evaluate(
+            {
+                "tab": "model",
+                "mode": "linear",
+                "formula": "y = x1 + x2",
+                "has_effects": False,
+                "has_clusters": False,
+                "clusters_resolved": True,
+                "data_section_open": False,
+                "corr_section_open": False,
+                "formula_display": "y = x1 + x2",
+            }
+        )
+        assert any(t.style == "next" for t in result), (
+            "No 'next' tip for formula without effects"
+        )
 
     def test_model_ready(self):
-        result = self._evaluate({
-            "tab": "model", "mode": "linear", "formula": "y = x1",
-            "has_effects": True, "has_clusters": False,
-            "clusters_configured": False, "clusters_resolved": True,
-            "data_section_open": False, "corr_section_open": False,
-            "formula_display": "y = x1",
-        })
+        result = self._evaluate(
+            {
+                "tab": "model",
+                "mode": "linear",
+                "formula": "y = x1",
+                "has_effects": True,
+                "has_clusters": False,
+                "clusters_configured": False,
+                "clusters_resolved": True,
+                "data_section_open": False,
+                "corr_section_open": False,
+                "formula_display": "y = x1",
+            }
+        )
         assert any(t.style == "done" for t in result), "No 'done' tip for ready model"
 
     def test_data_section_no_upload(self):
-        result = self._evaluate({
-            "tab": "model", "mode": "linear",
-            "data_section_open": True, "data_uploaded": False,
-        })
-        assert any(t.style == "next" for t in result), "No tip when data section open, no upload"
+        result = self._evaluate(
+            {
+                "tab": "model",
+                "mode": "linear",
+                "data_section_open": True,
+                "data_uploaded": False,
+            }
+        )
+        assert any(t.style == "next" for t in result), (
+            "No tip when data section open, no upload"
+        )
 
     def test_data_section_uploaded(self):
-        result = self._evaluate({
-            "tab": "model", "mode": "linear",
-            "data_section_open": True, "data_uploaded": True,
-            "data_filename": "test.csv", "data_rows": 100,
-        })
+        result = self._evaluate(
+            {
+                "tab": "model",
+                "mode": "linear",
+                "data_section_open": True,
+                "data_uploaded": True,
+                "data_filename": "test.csv",
+                "data_rows": 100,
+            }
+        )
         assert any(t.style == "done" for t in result), "No done tip when data uploaded"
 
     def test_corr_section_no_data(self):
-        result = self._evaluate({
-            "tab": "model", "mode": "linear",
-            "corr_section_open": True, "data_uploaded": False,
-            "correlable_count": 3, "data_section_open": False,
-        })
+        result = self._evaluate(
+            {
+                "tab": "model",
+                "mode": "linear",
+                "corr_section_open": True,
+                "data_uploaded": False,
+                "correlable_count": 3,
+                "data_section_open": False,
+            }
+        )
         assert len(result) >= 1, "No tip for corr section without data"
 
     def test_mixed_model_clusters_needed(self):
-        result = self._evaluate({
-            "tab": "model", "mode": "linear", "formula": "y ~ x + (1|g)",
-            "has_effects": False, "has_clusters": True,
-            "clusters_configured": False,
-            "data_section_open": False, "corr_section_open": False,
-            "formula_display": "y ~ x + (1|g)",
-        })
-        assert any("cluster" in t.text.lower() for t in result), "No cluster tip for mixed model"
+        result = self._evaluate(
+            {
+                "tab": "model",
+                "mode": "linear",
+                "formula": "y ~ x + (1|g)",
+                "has_effects": False,
+                "has_clusters": True,
+                "clusters_configured": False,
+                "data_section_open": False,
+                "corr_section_open": False,
+                "formula_display": "y ~ x + (1|g)",
+            }
+        )
+        assert any("cluster" in t.text.lower() for t in result), (
+            "No cluster tip for mixed model"
+        )
 
     def test_analysis_not_ready(self):
-        result = self._evaluate({
-            "tab": "analysis", "model_ready": False,
-        })
+        result = self._evaluate(
+            {
+                "tab": "analysis",
+                "model_ready": False,
+            }
+        )
         assert len(result) >= 1, "No tip for analysis tab when model not ready"
 
     def test_analysis_ready(self):
-        result = self._evaluate({
-            "tab": "analysis", "model_ready": True,
-            "formula_display": "y = x1", "n_predictors": 1,
-            "has_factors": False,
-        })
-        assert any(t.style == "done" for t in result), "No done tip for analysis with ready model"
+        result = self._evaluate(
+            {
+                "tab": "analysis",
+                "model_ready": True,
+                "formula_display": "y = x1",
+                "n_predictors": 1,
+                "has_factors": False,
+            }
+        )
+        assert any(t.style == "done" for t in result), (
+            "No done tip for analysis with ready model"
+        )
 
     def test_progress_supplement_data_section(self):
-        result = self._evaluate({
-            "tab": "model", "mode": "linear",
-            "formula": "y = x1", "has_effects": False,
-            "has_clusters": False, "clusters_resolved": True,
-            "data_section_open": True, "data_uploaded": False,
-            "corr_section_open": False,
-            "formula_display": "y = x1",
-        })
+        result = self._evaluate(
+            {
+                "tab": "model",
+                "mode": "linear",
+                "formula": "y = x1",
+                "has_effects": False,
+                "has_clusters": False,
+                "clusters_resolved": True,
+                "data_section_open": True,
+                "data_uploaded": False,
+                "corr_section_open": False,
+                "formula_display": "y = x1",
+            }
+        )
         assert any("effect" in t.text.lower() for t in result), (
             "No model progress tip when data section open and effects missing"
         )

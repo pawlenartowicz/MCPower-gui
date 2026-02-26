@@ -503,3 +503,12 @@
   priority: 140
   conditions:
     model_ready: true
+
+- id: test_formula_hint
+  tab: analysis
+  text: "   Optional: Enter a Test Formula to evaluate power under model misspecification"
+  style: optional
+  priority: 145
+  conditions:
+    model_ready: true
+    mode: regression
