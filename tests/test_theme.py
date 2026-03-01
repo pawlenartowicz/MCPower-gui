@@ -13,7 +13,10 @@ from PySide6.QtWidgets import QApplication
 # Ensure a QApplication exists before importing theme
 _app = QApplication.instance() or QApplication(sys.argv)
 
+import mcpower_gui.theme as theme_module  # noqa: E402
+
 from mcpower_gui.theme import (  # noqa: E402
+    CardProxyStyle,
     ThemeMode,
     apply_theme,
     current_colors,
@@ -62,7 +65,7 @@ class TestApplyTheme:
 
     def test_sets_fusion_style(self):
         apply_theme(ThemeMode.LIGHT)
-        assert _app.style().name().lower() == "fusion"
+        assert isinstance(theme_module._current_style, CardProxyStyle)
 
     def test_loads_from_settings_when_no_mode(self):
         save_theme_mode(ThemeMode.DARK)
