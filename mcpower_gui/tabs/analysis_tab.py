@@ -1,11 +1,12 @@
 """Analysis tab — common settings, power analysis, and sample size search."""
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QFormLayout,
     QGroupBox,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
     QMessageBox,
@@ -41,14 +42,9 @@ class AnalysisTab(QWidget):
         self._model_ready = False
         self._all_available_tests: list[str] = []
 
-        outer = QVBoxLayout(self)
+        outer = QHBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
-
-        # ── Tutorial Guide (above scroll — always visible) ──
-        self._tutorial = TutorialGuide(mode="analysis")
-        outer.addWidget(self._tutorial)
-        self._tutorial.update_state(model_ready=False)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -143,7 +139,13 @@ class AnalysisTab(QWidget):
 
         root.addStretch()
         scroll.setWidget(content)
-        outer.addWidget(scroll)
+        outer.addWidget(scroll, stretch=1)
+
+        # ── Tutorial Guide (right side panel) ──
+        self._tutorial = TutorialGuide(mode="analysis")
+        self._tutorial.setFixedWidth(400)
+        outer.addWidget(self._tutorial, alignment=Qt.AlignmentFlag.AlignTop)
+        self._tutorial.update_state(model_ready=False)
 
         # Connections
         self._btn_power.clicked.connect(self._on_run_power)

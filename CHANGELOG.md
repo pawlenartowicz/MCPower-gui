@@ -2,6 +2,20 @@
 
 All notable changes to MCPower GUI are documented in this file.
 
+## [0.3.1] — 2026-03-01
+
+### Changed
+
+- **Tutorial guide as side panel** — Tips moved from a top banner to a fixed-width right-side panel on both Model and Analysis tabs, freeing vertical space for content
+- **Card-style QGroupBox frames** — New `CardProxyStyle` draws rounded card frames for group boxes, replacing the default Fusion flat style
+- **Tab styling** — Theme-aware tab bar with rounded corners, accent-colored selected indicator, and hover effects
+- **Tutorial visual redesign** — Accent-colored callout border, "Tips" header label, larger dismiss button with hover effect
+- Bumped MCPower dependency to 0.6.1
+
+### Fixed
+
+- README: LME validation link pointed to non-existent wiki page
+
 ## [0.3.0] — 2026-02-24
 
 ### Changed

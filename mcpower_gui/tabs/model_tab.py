@@ -101,15 +101,10 @@ class ModelTab(QWidget):
         self._data_detected: dict[str, dict] = {}
         self._last_emitted_model_type: str | None = None
 
-        # Tab-level layout: tutorial (fixed) + scroll area
-        outer = QVBoxLayout(self)
+        # Tab-level layout: scroll (main) + tutorial (right side panel)
+        outer = QHBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
-
-        # --- Tutorial Guide (above scroll — always visible) ---
-        self._tutorial = TutorialGuide(mode="model")
-        self._tutorial.formula_example_requested.connect(self._on_tutorial_formula)
-        outer.addWidget(self._tutorial)
 
         self._scroll = QScrollArea()
         self._scroll.setWidgetResizable(True)
@@ -340,7 +335,13 @@ class ModelTab(QWidget):
 
         root.addStretch()
         self._scroll.setWidget(content)
-        outer.addWidget(self._scroll)
+        outer.addWidget(self._scroll, stretch=1)
+
+        # --- Tutorial Guide (right side panel) ---
+        self._tutorial = TutorialGuide(mode="model")
+        self._tutorial.formula_example_requested.connect(self._on_tutorial_formula)
+        self._tutorial.setFixedWidth(400)
+        outer.addWidget(self._tutorial, alignment=Qt.AlignmentFlag.AlignTop)
 
         # --- Connections ---
         self._btn_upload.clicked.connect(self._on_upload)

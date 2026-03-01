@@ -2,9 +2,9 @@
 
 from enum import Enum
 
-from PySide6.QtCore import QSettings, Qt
-from PySide6.QtGui import QColor, QPalette
-from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QRectF, QSettings, Qt
+from PySide6.QtGui import QColor, QPainter, QPainterPath, QPalette, QPen
+from PySide6.QtWidgets import QApplication, QProxyStyle, QStyle
 
 
 class ThemeMode(Enum):
@@ -20,6 +20,97 @@ _FONT_SIZE_KEY = "font_size"
 # Current resolved dark/light state (set by apply_theme)
 _is_dark: bool = False
 _current_mode: ThemeMode = ThemeMode.SYSTEM
+_current_style: "CardProxyStyle | None" = None
+
+
+# ---------------------------------------------------------------------------
+# Card proxy style — replaces only PE_FrameGroupBox painting
+# ---------------------------------------------------------------------------
+
+
+class CardProxyStyle(QProxyStyle):
+    """Fusion-based style that draws QGroupBox frames as rounded cards."""
+
+    def __init__(self, card_bg: str, card_border: str):
+        super().__init__("Fusion")
+        self._card_bg = QColor(card_bg)
+        self._card_border = QColor(card_border)
+
+    def drawPrimitive(self, element, option, painter, widget=None):
+        if element == QStyle.PrimitiveElement.PE_FrameGroupBox:
+            painter.save()
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            rect = QRectF(option.rect).adjusted(0.5, 0.5, -0.5, -0.5)
+            path = QPainterPath()
+            path.addRoundedRect(rect, 6, 6)
+            painter.fillPath(path, self._card_bg)
+            painter.setPen(QPen(self._card_border, 1.0))
+            painter.drawPath(path)
+            painter.restore()
+            return
+        super().drawPrimitive(element, option, painter, widget)
+
+
+# ---------------------------------------------------------------------------
+# Tab-only QSS (no QGroupBox rules — proxy style handles those)
+# ---------------------------------------------------------------------------
+
+
+def _generate_stylesheet(mode: ThemeMode, dark: bool) -> str:
+    """Return a global QSS string for tab styling only."""
+    if mode == ThemeMode.DARK_PINK:
+        tab_bg = "#3a3035"
+        tab_selected_bg = "#4a3845"
+        tab_border = "#5a3a4a"
+        tab_accent = "#e91e63"
+        tab_text = "#dcdcdc"
+        tab_muted = "#aa7891"
+    elif dark:
+        tab_bg = "#353535"
+        tab_selected_bg = "#444444"
+        tab_border = "#5a5a5a"
+        tab_accent = "#2a82da"
+        tab_text = "#dcdcdc"
+        tab_muted = "#999999"
+    else:
+        tab_bg = "#e8e8e8"
+        tab_selected_bg = "#ffffff"
+        tab_border = "#c8c8c8"
+        tab_accent = "#2a82da"
+        tab_text = "#000000"
+        tab_muted = "#666666"
+
+    return f"""
+        QTabWidget::pane {{
+            border: 1px solid {tab_border};
+            top: -1px;
+        }}
+        QTabBar::tab {{
+            background: {tab_bg};
+            color: {tab_muted};
+            border: 1px solid {tab_border};
+            border-bottom: none;
+            padding: 8px 20px;
+            margin-right: 2px;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+        }}
+        QTabBar::tab:selected {{
+            background: {tab_selected_bg};
+            color: {tab_text};
+            font-weight: bold;
+            border-bottom: 2px solid {tab_accent};
+        }}
+        QTabBar::tab:hover:!selected {{
+            background: {tab_selected_bg};
+            color: {tab_text};
+        }}
+    """
+
+
+# ---------------------------------------------------------------------------
+# Palette builders
+# ---------------------------------------------------------------------------
 
 
 def _detect_system_dark() -> bool:
@@ -107,6 +198,11 @@ def _build_dark_pink_palette() -> QPalette:
     return p
 
 
+# ---------------------------------------------------------------------------
+# Settings persistence
+# ---------------------------------------------------------------------------
+
+
 def saved_theme_mode() -> ThemeMode:
     """Read persisted theme preference from QSettings."""
     settings = QSettings("MCPower", "MCPower")
@@ -123,9 +219,14 @@ def save_theme_mode(mode: ThemeMode) -> None:
     settings.setValue(_SETTINGS_KEY, mode.value)
 
 
+# ---------------------------------------------------------------------------
+# Theme application
+# ---------------------------------------------------------------------------
+
+
 def apply_theme(mode: ThemeMode | None = None) -> None:
     """Apply the given theme (or load from settings) to QApplication."""
-    global _is_dark, _current_mode
+    global _is_dark, _current_mode, _current_style
     app = QApplication.instance()
     if not isinstance(app, QApplication):
         return
@@ -134,7 +235,6 @@ def apply_theme(mode: ThemeMode | None = None) -> None:
         mode = saved_theme_mode()
 
     _current_mode = mode
-    app.setStyle("Fusion")
 
     if mode == ThemeMode.SYSTEM:
         _is_dark = _detect_system_dark()
@@ -143,6 +243,17 @@ def apply_theme(mode: ThemeMode | None = None) -> None:
     else:
         _is_dark = False
 
+    # Card colours per theme (QGroupBox frame)
+    if mode == ThemeMode.DARK_PINK:
+        card_bg, card_border = "#4a3f47", "#6a5a62"
+    elif _is_dark:
+        card_bg, card_border = "#444444", "#5a5a5a"
+    else:
+        card_bg, card_border = "#ffffff", "#c8c8c8"
+
+    _current_style = CardProxyStyle(card_bg, card_border)
+    app.setStyle(_current_style)
+
     if mode == ThemeMode.DARK_PINK:
         palette = _build_dark_pink_palette()
     elif _is_dark:
@@ -150,6 +261,7 @@ def apply_theme(mode: ThemeMode | None = None) -> None:
     else:
         palette = _build_light_palette()
     app.setPalette(palette)
+    app.setStyleSheet(_generate_stylesheet(mode, _is_dark))
 
 
 def is_dark() -> bool:

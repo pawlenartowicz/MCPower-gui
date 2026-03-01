@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from mcpower_gui.theme import current_colors
+from mcpower_gui.theme import current_colors, current_mode, ThemeMode
 from mcpower_gui.widgets.formula_input import EXAMPLES as _FORMULA_EXAMPLES
 from mcpower_gui.widgets.tip_engine import TipEngine
 
@@ -52,6 +52,7 @@ class TutorialGuide(QWidget):
         super().__init__(parent)
         self._mode = mode
         self._dismissed = False
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         # Check persistent setting
         settings = QSettings("MCPower", "MCPower")
@@ -59,7 +60,7 @@ class TutorialGuide(QWidget):
             self._dismissed = True
 
         self._layout = QVBoxLayout(self)
-        self._layout.setContentsMargins(8, 2, 8, 6)
+        self._layout.setContentsMargins(10, 6, 10, 8)
         self._layout.setSpacing(2)
 
         # State cache for rebuild
@@ -176,7 +177,7 @@ class TutorialGuide(QWidget):
                 self._add_formula_examples()
             else:
                 self._add_line(tip.text, tip.style)
-        self._add_dismiss_button()
+        self._add_header()
         self._apply_card_style()
 
     def _clear(self):
@@ -238,30 +239,54 @@ class TutorialGuide(QWidget):
         h.addStretch()
         self._layout.addWidget(row)
 
-    def _add_dismiss_button(self):
-        """Add a dismiss [x] button to the top-right corner."""
-        # We insert a header row with stretch + dismiss button
+    def _add_header(self):
+        """Add header row: 'Tips' label on the left, dismiss [x] on the right."""
         row = QWidget()
         h = QHBoxLayout(row)
         h.setContentsMargins(0, 0, 0, 0)
+
+        colors = current_colors()
+        title = QLabel("Tips")
+        title.setStyleSheet(
+            f"font-weight: bold; font-size: 11px; color: {colors['muted']}; "
+            "text-transform: uppercase; letter-spacing: 1px; padding: 0; margin: 0;"
+        )
+        h.addWidget(title)
+
         h.addStretch()
+
         btn = QPushButton("\u00d7")
-        btn.setFixedSize(20, 20)
-        btn.setStyleSheet("font-size: 14px;")
+        btn.setFixedSize(26, 26)
+        btn.setStyleSheet(
+            "QPushButton { font-size: 18px; font-weight: bold; border: none; }"
+            "QPushButton:hover { background: rgba(128,128,128,0.25); border-radius: 4px; }"
+        )
         btn.setFlat(True)
-        btn.setToolTip("Dismiss guide for this session")
+        btn.setToolTip("Dismiss tips (re-enable in Settings)")
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         btn.clicked.connect(self._on_dismiss)
         h.addWidget(btn)
         self._layout.insertWidget(0, row)
 
     def _apply_card_style(self):
-        """Apply a subtle card background."""
-        colors = current_colors()
-        border = colors["border"]
+        """Apply a tip-callout frame, visually distinct from QGroupBox cards."""
+        mode = current_mode()
+        if mode == ThemeMode.DARK_PINK:
+            accent = "#e91e63"
+            bg = "rgba(233, 30, 99, 0.14)"
+            border = "#e91e63"
+        elif mode in (ThemeMode.DARK, ThemeMode.SYSTEM):
+            accent = "#2a82da"
+            bg = "rgba(42, 130, 218, 0.14)"
+            border = "#2a82da"
+        else:
+            accent = "#1a6fbb"
+            bg = "rgba(42, 130, 218, 0.10)"
+            border = "#1a6fbb"
         self.setStyleSheet(
-            f"TutorialGuide {{ background: rgba(128,128,128,0.12); "
-            f"border: 1px solid {border}; border-radius: 6px; }}"
+            f"TutorialGuide {{ background: {bg}; "
+            f"border: 2px solid {border}; "
+            f"margin: 4px 6px; }}"
         )
 
     def _on_dismiss(self):

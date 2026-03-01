@@ -126,7 +126,7 @@ Both `=` and `~` are accepted as separators between the dependent variable and p
 
 ## Built on
 
-MCPower GUI is built on [MCPower](https://github.com/pawlenartowicz/MCPower). MCPower's mixed-effects solver is [validated against R's lme4](https://github.com/pawlenartowicz/MCPower/wiki/Concept-LME-Validation) across 95 scenarios with 100% pass rate.
+MCPower GUI is built on [MCPower](https://github.com/pawlenartowicz/MCPower). MCPower's mixed-effects solver is [validated against R's lme4](https://freestylerscientist.pl/mcpower/lme-validation.html) across 95 scenarios with 100% pass rate.
 
 ## License & Citation
 
